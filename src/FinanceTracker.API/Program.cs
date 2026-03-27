@@ -68,6 +68,12 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.MapGet("/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
+    endpointSources
+        .SelectMany(e => e.Endpoints)
+        .Select(e => e.DisplayName)
+);
+
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
