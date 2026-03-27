@@ -209,7 +209,7 @@ await _uow.SaveChangesAsync();
 
 ## 📈 Next Steps & Ideas
 
-Here are features you can add to extend the project:
+Here are some future features that are coming to the project:
 
 - [ ] **Refresh token rotation** — persist refresh tokens to DB and rotate on use
 - [ ] **Pagination** — add page/pageSize params to transaction queries
