@@ -5,10 +5,12 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 
-var apiBaseUrl = builder.Configuration["ApiBaseUrl"]!;
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"]
+    ?? "https://finance-tracker-web-app-h7gbepf2dccvfccx.westeurope-01.azurewebsites.net"; // fallback
+
 builder.Services.AddScoped(sp => new HttpClient
 {
-    BaseAddress = new Uri("https://finance-tracker-web-app-h7gbepf2dccvfccx.westeurope-01.azurewebsites.net")
+    BaseAddress = new Uri(apiBaseUrl)
 });
 
 builder.Services.AddScoped<ApiClient>();
