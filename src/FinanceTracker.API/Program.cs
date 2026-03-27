@@ -30,7 +30,7 @@ builder.Services.AddOpenApi();
 // ── CORS (for Blazor frontend) ──
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins("https://localhost:7200")
+        policy.WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()!)
               .AllowAnyHeader()
               .AllowAnyMethod()));
 
