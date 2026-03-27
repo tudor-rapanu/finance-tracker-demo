@@ -1,0 +1,148 @@
+@page "/login"
+@layout AuthLayout
+@using Microsoft.AspNetCore.Components.Web
+@inject FinanceTracker.Web.Services.ApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Login — FinTracker</PageTitle>
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="logo">💰 FinTracker</div>
+        <h2>@(_isRegister ? "Create Account" : "Welcome back")</h2>
+
+        @if (_isRegister)
+        {
+            <div class="form-group">
+                <label>First Name</label>
+                <input @bind="_firstName" placeholder="John" />
+            </div>
+            <div class="form-group">
+                <label>Last Name</label>
+                <input @bind="_lastName" placeholder="Doe" />
+            </div>
+            <div class="form-group">
+                <label>Preferred Currency</label>
+                <select @bind="_currency">
+                    <option>USD</option><option>EUR</option><option>GBP</option>
+                    <option>RON</option><option>JPY</option><option>CAD</option>
+                </select>
+            </div>
+        }
+
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" @bind="_email" placeholder="you@example.com" />
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" @bind="_password" placeholder="••••••••" />
+        </div>
+
+        @if (_error is not null)
+        {
+            <p class="error">@_error</p>
+        }
+
+        <button class="btn-submit" @onclick="Submit" disabled="@_loading">
+            @(_loading ? "Please wait..." : (_isRegister ? "Register" : "Login"))
+        </button>
+
+        <p class="toggle">
+            @if (_isRegister)
+            {
+                <span>Already have an account?
+                    <a href="javascript:void(0)" @onclick="() => { _isRegister = false; _error = null; }">Login</a>
+                </span>
+            }
+            else
+            {
+                <span>No account?
+                    <a href="javascript:void(0)" @onclick="() => { _isRegister = true; _error = null; }">Register</a>
+                </span>
+            }
+        </p>
+    </div>
+</div>
+
+@code {
+    private string _email = "", _password = "", _firstName = "", _lastName = "", _currency = "USD";
+    private string? _error;
+    private bool _loading, _isRegister;
+
+    private async Task Submit()
+    {
+        _error = null;
+        _loading = true;
+
+        if (_isRegister)
+        {
+            var result = await Api.RegisterAsync(new FinanceTracker.Contracts.RegisterDto(
+                _firstName, _lastName, _email, _password, _currency));
+            if (result is not null)
+                Nav.NavigateTo("/");
+            else
+                _error = "Registration failed. Email may already be in use.";
+        }
+        else
+        {
+            var result = await Api.LoginAsync(new FinanceTracker.Contracts.LoginDto(_email, _password));
+            if (result is not null)
+                Nav.NavigateTo("/");
+            else
+                _error = "Invalid email or password.";
+        }
+
+        _loading = false;
+    }
+}
+
+<style>
+    body { margin: 0; }
+    .auth-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: #f4f6f9;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .auth-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 4px 24px rgba(0,0,0,.08);
+    }
+    .logo { font-size: 1.6rem; text-align: center; margin-bottom: 0.5rem; }
+    h2 { text-align: center; margin: 0 0 1.5rem; color: #333; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.85rem; color: #555; margin-bottom: 0.3rem; }
+    .form-group input, .form-group select {
+        width: 100%;
+        padding: 0.6rem 0.8rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+    }
+    .btn-submit {
+        width: 100%;
+        padding: 0.75rem;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        margin-top: 0.5rem;
+    }
+    .btn-submit:hover { background: #2980b9; }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error { color: #e74c3c; font-size: 0.85rem; text-align: center; margin-top: 0.5rem; }
+    .toggle { text-align: center; font-size: 0.85rem; color: #777; margin-top: 1rem; }
+    .toggle a { color: #3498db; cursor: pointer; text-decoration: none; }
+    .toggle a:hover { text-decoration: underline; }
+</style>
+

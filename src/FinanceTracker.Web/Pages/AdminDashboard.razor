@@ -1,0 +1,194 @@
+@page "/admin"
+@using FinanceTracker.Contracts
+@inject FinanceTracker.Web.Services.ApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Admin Dashboard</PageTitle>
+
+@if (_loading)
+{
+    <p>Loading...</p>
+}
+else if (!_isAdmin)
+{
+    <p>Access denied.</p>
+}
+else
+{
+    <h1>Admin Dashboard</h1>
+
+    @if (_stats is not null)
+    {
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Users</div>
+                <div class="stat-value">@_stats.TotalUsers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Transactions</div>
+                <div class="stat-value">@_stats.TotalTransactions</div>
+            </div>
+            <div class="stat-card income">
+                <div class="stat-label">System Income</div>
+                <div class="stat-value">@_stats.TotalSystemIncome.ToString("C")</div>
+            </div>
+            <div class="stat-card expense">
+                <div class="stat-label">System Expenses</div>
+                <div class="stat-value">@_stats.TotalSystemExpenses.ToString("C")</div>
+            </div>
+        </div>
+    }
+
+    <h2>All Users</h2>
+    @if (_users.Count == 0)
+    {
+        <p>No users found.</p>
+    }
+    else
+    {
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Currency</th>
+                    <th>Joined</th>
+                    <th>Roles</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in _users)
+                {
+                    <tr>
+                        <td>@user.FirstName @user.LastName</td>
+                        <td>@user.Email</td>
+                        <td>@user.PreferredCurrency</td>
+                        <td>@user.CreatedAt.ToShortDateString()</td>
+                        <td>@string.Join(", ", user.Roles)</td>
+                        <td>
+                            @if (user.Roles.Contains("Admin"))
+                            {
+                                <button class="btn-demote" @onclick="() => DemoteAdmin(user.Id)">Remove Admin</button>
+                            }
+                            else
+                            {
+                                <button class="btn-promote" @onclick="() => PromoteAdmin(user.Id)">Make Admin</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="message">@_message</p>
+    }
+}
+
+@code {
+    private bool _loading = true;
+    private bool _isAdmin;
+    private AdminDashboardDto? _stats;
+    private List<UserDto> _users = new();
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isAdmin = await Api.IsAdminAsync();
+        if (!_isAdmin)
+        {
+            _loading = false;
+            return;
+        }
+
+        await LoadDataAsync();
+        _loading = false;
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _stats = await Api.GetAdminStatsAsync();
+        _users = await Api.GetAdminUsersAsync();
+    }
+
+    private Task PromoteAdmin(string userId) => SetRole(userId, "Admin", true);
+    private Task DemoteAdmin(string userId) => SetRole(userId, "Admin", false);
+
+    private async Task SetRole(string userId, string role, bool assign)
+    {
+        var success = await Api.SetUserRoleAsync(new SetUserRoleDto(userId, role, assign));
+        _message = success
+            ? $"Role '{role}' {(assign ? "assigned to" : "removed from")} user."
+            : "Failed to update role.";
+        await LoadDataAsync();
+    }
+}
+
+<style>
+    h1 { margin-bottom: 1.5rem; }
+    h2 { margin: 2rem 0 1rem; }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.2rem 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .stat-card.income { border-left: 4px solid #2ecc71; }
+    .stat-card.expense { border-left: 4px solid #e74c3c; }
+    .stat-label { font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-value { font-size: 1.8rem; font-weight: 700; color: #1a1a2e; margin-top: 0.25rem; }
+
+    .user-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .user-table th {
+        background: #1a1a2e;
+        color: white;
+        padding: 0.8rem 1rem;
+        text-align: left;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+    }
+
+    .user-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 0.9rem;
+    }
+
+    .user-table tr:last-child td { border-bottom: none; }
+
+    .btn-promote, .btn-demote {
+        padding: 0.35rem 0.75rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .btn-promote { background: #3498db; color: white; }
+    .btn-promote:hover { background: #2980b9; }
+    .btn-demote { background: #e74c3c; color: white; }
+    .btn-demote:hover { background: #c0392b; }
+
+    .message { margin-top: 1rem; padding: 0.75rem 1rem; background: #d4edda; border-radius: 8px; color: #155724; }
+</style>

@@ -1,0 +1,12 @@
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Domain/bin/Debug/net10.0/FinanceTracker.Domain.deps.json
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Domain/bin/Debug/net10.0/FinanceTracker.Domain.dll
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Domain/bin/Debug/net10.0/FinanceTracker.Domain.pdb
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Domain/obj/Debug/net10.0/FinanceTracker.Domain.csproj.AssemblyReference.cache
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Domain/obj/Debug/net10.0/FinanceTracker.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Domain/obj/Debug/net10.0/FinanceTracker.Domain.AssemblyInfoInputs.cache
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Domain/obj/Debug/net10.0/FinanceTracker.Domain.AssemblyInfo.cs
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Domain/obj/Debug/net10.0/FinanceTracker.Domain.csproj.CoreCompileInputs.cache
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Domain/obj/Debug/net10.0/FinanceTracker.Domain.dll
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Domain/obj/Debug/net10.0/refint/FinanceTracker.Domain.dll
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Domain/obj/Debug/net10.0/FinanceTracker.Domain.pdb
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Domain/obj/Debug/net10.0/ref/FinanceTracker.Domain.dll

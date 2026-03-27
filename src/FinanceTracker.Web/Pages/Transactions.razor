@@ -1,0 +1,249 @@
+@page "/transactions"
+@using Microsoft.AspNetCore.Components.Web
+@inject FinanceTracker.Web.Services.ApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Transactions — FinTracker</PageTitle>
+
+<div class="transactions-page">
+    <div class="page-header">
+        <h1>Transactions</h1>
+        <button class="btn-primary" @onclick="() => _showForm = !_showForm">
+            @(_showForm ? "✕ Cancel" : "+ Add Transaction")
+        </button>
+    </div>
+
+    @if (_showForm)
+    {
+        <div class="form-card">
+            <h2>New Transaction</h2>
+            <div class="form-grid">
+                <label>
+                    Type
+                    <select @bind="_form.Type">
+                        <option value="1">Income</option>
+                        <option value="2">Expense</option>
+                    </select>
+                </label>
+                <label>
+                    Amount
+                    <input type="number" step="0.01" @bind="_form.Amount" />
+                </label>
+                <label>
+                    Currency
+                    <select @bind="_form.Currency">
+                        <option>USD</option><option>EUR</option><option>GBP</option>
+                        <option>RON</option><option>JPY</option><option>CAD</option>
+                    </select>
+                </label>
+                <label>
+                    Category
+                    <select @bind="_form.Category">
+                        @if (_form.Type == 1)
+                        {
+                            <option value="1">Salary</option>
+                            <option value="2">Freelance</option>
+                            <option value="3">Investment</option>
+                            <option value="4">Gift</option>
+                            <option value="5">Other Income</option>
+                        }
+                        else
+                        {
+                            <option value="10">Housing</option>
+                            <option value="11">Food</option>
+                            <option value="12">Transport</option>
+                            <option value="13">Healthcare</option>
+                            <option value="14">Entertainment</option>
+                            <option value="15">Shopping</option>
+                            <option value="16">Utilities</option>
+                            <option value="17">Education</option>
+                            <option value="18">Travel</option>
+                            <option value="19">Other Expense</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    Description
+                    <input type="text" @bind="_form.Description" placeholder="e.g. Monthly salary" />
+                </label>
+                <label>
+                    Date
+                    <input type="date" @bind="_form.Date" />
+                </label>
+                <label style="grid-column: span 2">
+                    Notes (optional)
+                    <input type="text" @bind="_form.Notes" />
+                </label>
+            </div>
+            @if (_formError is not null)
+            {
+                <p class="error">@_formError</p>
+            }
+            <button class="btn-primary" @onclick="SubmitTransaction" disabled="@_submitting">
+                @(_submitting ? "Saving..." : "Save Transaction")
+            </button>
+        </div>
+    }
+
+    <div class="filter-bar">
+        <select @bind="_filterMonth">
+            <option value="0">All months</option>
+            @for (int m = 1; m <= 12; m++)
+            {
+                <option value="@m">@(new DateTime(2000, m, 1).ToString("MMMM"))</option>
+            }
+        </select>
+        <select @bind="_filterYear">
+            @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 3; y--)
+            {
+                <option value="@y">@y</option>
+            }
+        </select>
+        <button @onclick="LoadTransactions">Filter</button>
+    </div>
+
+    @if (_loading)
+    {
+        <p>Loading...</p>
+    }
+    else if (_transactions.Any())
+    {
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th><th>Description</th><th>Category</th>
+                        <th>Type</th><th>Amount</th><th>Base (@_preferredCurrency)</th><th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in _transactions)
+                    {
+                        <tr>
+                            <td>@t.Date.ToShortDateString()</td>
+                            <td>@t.Description</td>
+                            <td>@((TransactionCategory)t.Category)</td>
+                            <td><span class="badge @(t.Type == 1 ? "income" : "expense")">@(t.Type == 1 ? "Income" : "Expense")</span></td>
+                            <td>@t.Amount.ToString("N2") @t.Currency</td>
+                            <td>@t.AmountInBaseCurrency.ToString("N2") @_preferredCurrency</td>
+                            <td><button class="btn-delete" @onclick="() => DeleteTransaction(t.Id)">✕</button></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <p>No transactions found. Add your first one above!</p>
+        </div>
+    }
+</div>
+
+@code {
+    private List<FinanceTracker.Contracts.TransactionDto> _transactions = new();
+    private bool _loading = true;
+    private bool _showForm = false;
+    private bool _submitting = false;
+    private string? _formError;
+    private int _filterMonth = DateTime.Now.Month;
+    private int _filterYear = DateTime.Now.Year;
+    private string _preferredCurrency = "USD";
+
+    private FormModel _form = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await Api.IsAuthenticatedAsync()) { Nav.NavigateTo("/login"); return; }
+        _preferredCurrency = await Api.GetPreferredCurrencyAsync() ?? "USD";
+        _form.Currency = _preferredCurrency;
+        await LoadTransactions();
+    }
+
+    private async Task LoadTransactions()
+    {
+        _loading = true;
+        _transactions = await Api.GetTransactionsAsync(
+            _filterMonth > 0 ? _filterMonth : null,
+            _filterYear);
+        _loading = false;
+    }
+
+    private async Task SubmitTransaction()
+    {
+        _formError = null;
+        if (_form.Amount <= 0) { _formError = "Amount must be greater than 0."; return; }
+        if (string.IsNullOrWhiteSpace(_form.Description)) { _formError = "Description is required."; return; }
+
+        _submitting = true;
+        var dto = new FinanceTracker.Contracts.CreateTransactionDto(
+            _form.Amount, _form.Currency, _form.Type, _form.Category,
+            _form.Description, _form.Date, _form.Notes);
+
+        var success = await Api.CreateTransactionAsync(dto);
+        _submitting = false;
+
+        if (success)
+        {
+            _showForm = false;
+            _form = new();
+            _form.Currency = _preferredCurrency;
+            await LoadTransactions();
+        }
+        else
+        {
+            _formError = "Failed to save transaction. Please try again.";
+        }
+    }
+
+    private async Task DeleteTransaction(Guid id)
+    {
+        await Api.DeleteTransactionAsync(id);
+        await LoadTransactions();
+    }
+
+    private enum TransactionCategory
+    {
+        Salary=1,Freelance,Investment,Gift,OtherIncome,
+        Housing=10,Food,Transport,Healthcare,Entertainment,Shopping,Utilities,Education,Travel,OtherExpense
+    }
+
+    private class FormModel
+    {
+        public int Type { get; set; } = 2;
+        public decimal Amount { get; set; }
+        public string Currency { get; set; } = "USD";
+        public int Category { get; set; } = 11;
+        public string Description { get; set; } = "";
+        public DateTime Date { get; set; } = DateTime.Today;
+        public string? Notes { get; set; }
+    }
+}
+
+<style>
+    .transactions-page { max-width: 1000px; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .page-header h1 { margin: 0; }
+    .btn-primary { background: #3498db; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-size: 0.95rem; }
+    .btn-primary:disabled { opacity: 0.6; }
+    .form-card { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    .form-card h2 { margin: 0 0 1rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .form-grid label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; color: #555; }
+    .form-grid input, .form-grid select { padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; }
+    .error { color: #e74c3c; font-size: 0.85rem; margin-bottom: 0.5rem; }
+    .filter-bar { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .filter-bar select, .filter-bar button { padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid #ccc; }
+    .filter-bar button { background: #3498db; color: white; border: none; cursor: pointer; }
+    .table-wrap { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f8f9fa; padding: 0.75rem 1rem; text-align: left; font-size: 0.85rem; color: #666; }
+    td { padding: 0.75rem 1rem; border-top: 1px solid #f0f0f0; font-size: 0.9rem; }
+    .badge { padding: 0.2rem 0.6rem; border-radius: 99px; font-size: 0.75rem; font-weight: 600; }
+    .badge.income { background: #d5f5e3; color: #1e8449; }
+    .badge.expense { background: #fde8e8; color: #c0392b; }
+    .btn-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 1rem; }
+    .btn-delete:hover { color: #e74c3c; }
+    .empty-state { text-align: center; padding: 3rem; color: #aaa; }
+</style>

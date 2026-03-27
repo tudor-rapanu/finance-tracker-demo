@@ -1,0 +1,159 @@
+@page "/"
+@using Microsoft.AspNetCore.Components.Web
+@inject FinanceTracker.Web.Services.ApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Dashboard — FinTracker</PageTitle>
+
+<div class="dashboard">
+    <div class="page-header">
+        <h1>Dashboard</h1>
+        <div class="period-picker">
+            <select @bind="SelectedMonth">
+                @for (int m = 1; m <= 12; m++)
+                {
+                    <option value="@m">@(new DateTime(2000, m, 1).ToString("MMMM"))</option>
+                }
+            </select>
+            <select @bind="SelectedYear">
+                @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 3; y--)
+                {
+                    <option value="@y">@y</option>
+                }
+            </select>
+            <button @onclick="LoadData">Refresh</button>
+        </div>
+    </div>
+
+    @if (_loading)
+    {
+        <p>Loading...</p>
+    }
+    else if (_dashboard is not null)
+    {
+        <div class="stat-cards">
+            <div class="card income">
+                <span class="label">Total Income</span>
+                <span class="value">@_dashboard.TotalIncome.ToString("N2") @_dashboard.Currency</span>
+            </div>
+            <div class="card expense">
+                <span class="label">Total Expenses</span>
+                <span class="value">@_dashboard.TotalExpenses.ToString("N2") @_dashboard.Currency</span>
+            </div>
+            <div class="card net @(_dashboard.NetBalance >= 0 ? "positive" : "negative")">
+                <span class="label">Net Balance</span>
+                <span class="value">@_dashboard.NetBalance.ToString("N2") @_dashboard.Currency</span>
+            </div>
+        </div>
+
+        <div class="bottom-grid">
+            <div class="section">
+                <h2>Top Spending Categories</h2>
+                @if (_dashboard.TopCategories.Any())
+                {
+                    @foreach (var cat in _dashboard.TopCategories)
+                    {
+                        <div class="category-row">
+                            <span>@((TransactionCategory)cat.Category)</span>
+                            <div class="bar-wrap">
+                                <div class="bar" style="width:@(cat.Percentage)%"></div>
+                            </div>
+                            <span>@cat.Amount.ToString("N2") @_dashboard.Currency</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="empty">No expenses this period.</p>
+                }
+            </div>
+
+            <div class="section">
+                <h2>Budget Status</h2>
+                @if (_dashboard.ActiveBudgets.Any())
+                {
+                    @foreach (var b in _dashboard.ActiveBudgets)
+                    {
+                        var pct = Math.Min(b.PercentageUsed, 100);
+                        var color = pct >= 90 ? "#e74c3c" : pct >= 70 ? "#f39c12" : "#2ecc71";
+                        <div class="budget-row">
+                            <div class="budget-header">
+                                <span>@((TransactionCategory)b.Category)</span>
+                                <span>@b.SpentAmount.ToString("N2") @b.Currency / @b.LimitAmount.ToString("N2") @b.Currency</span>
+                            </div>
+                            <div class="bar-wrap">
+                                <div class="bar" style="width:@(pct)%; background:@color"></div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="empty">No budgets set. <a href="/budgets">Add one →</a></p>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <p>Could not load dashboard. <a href="/login">Please log in.</a></p>
+    }
+</div>
+
+@code {
+    private FinanceTracker.Contracts.DashboardDto? _dashboard;
+    private bool _loading = true;
+    private int SelectedMonth = DateTime.Now.Month;
+    private int SelectedYear = DateTime.Now.Year;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await Api.IsAuthenticatedAsync())
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _dashboard = await Api.GetDashboardAsync(SelectedMonth, SelectedYear);
+        _loading = false;
+    }
+
+    private enum TransactionCategory
+    {
+        Salary=1,Freelance,Investment,Gift,OtherIncome,
+        Housing=10,Food,Transport,Healthcare,Entertainment,Shopping,Utilities,Education,Travel,OtherExpense
+    }
+}
+
+<style>
+    .dashboard { max-width: 1000px; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .page-header h1 { margin: 0; }
+    .period-picker { display: flex; gap: 0.5rem; }
+    .period-picker select, .period-picker button { padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid #ccc; }
+    .period-picker button { background: #3498db; color: white; border: none; cursor: pointer; }
+    .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .card { background: white; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.4rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    .card .label { font-size: 0.85rem; color: #888; }
+    .card .value { font-size: 1.8rem; font-weight: 700; }
+    .card.income .value { color: #2ecc71; }
+    .card.expense .value { color: #e74c3c; }
+    .card.net.positive .value { color: #3498db; }
+    .card.net.negative .value { color: #e74c3c; }
+    .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .section { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    .section h2 { margin: 0 0 1rem; font-size: 1rem; color: #333; }
+    .category-row { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.7rem; font-size: 0.9rem; }
+    .category-row span:first-child { width: 110px; }
+    .category-row span:last-child { width: 70px; text-align: right; }
+    .bar-wrap { flex: 1; background: #f0f0f0; border-radius: 99px; height: 8px; overflow: hidden; }
+    .bar { height: 100%; background: #3498db; border-radius: 99px; transition: width 0.4s; }
+    .budget-row { margin-bottom: 1rem; }
+    .budget-header { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.3rem; }
+    .empty { color: #aaa; font-size: 0.9rem; }
+</style>

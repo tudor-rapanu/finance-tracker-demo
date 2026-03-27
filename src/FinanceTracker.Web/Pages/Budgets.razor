@@ -1,0 +1,200 @@
+@page "/budgets"
+@using Microsoft.AspNetCore.Components.Web
+@inject FinanceTracker.Web.Services.ApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Budgets — FinTracker</PageTitle>
+
+<div class="budgets-page">
+    <div class="page-header">
+        <h1>Budgets</h1>
+        <button class="btn-primary" @onclick="() => _showForm = !_showForm">
+            @(_showForm ? "✕ Cancel" : "+ New Budget")
+        </button>
+    </div>
+
+    @if (_showForm)
+    {
+        <div class="form-card">
+            <h2>Set Monthly Budget</h2>
+            <div class="form-grid">
+                <label>
+                    Category
+                    <select @bind="_form.Category">
+                        <option value="10">Housing</option>
+                        <option value="11">Food</option>
+                        <option value="12">Transport</option>
+                        <option value="13">Healthcare</option>
+                        <option value="14">Entertainment</option>
+                        <option value="15">Shopping</option>
+                        <option value="16">Utilities</option>
+                        <option value="17">Education</option>
+                        <option value="18">Travel</option>
+                        <option value="19">Other Expense</option>
+                    </select>
+                </label>
+                <label>
+                    Limit Amount
+                    <input type="number" step="0.01" @bind="_form.LimitAmount" />
+                </label>
+                <label>
+                    Currency
+                    <select @bind="_form.Currency">
+                        <option>USD</option><option>EUR</option><option>GBP</option><option>RON</option>
+                    </select>
+                </label>
+                <label>
+                    Month
+                    <select @bind="_form.Month">
+                        @for (int m = 1; m <= 12; m++)
+                        {
+                            <option value="@m">@(new DateTime(2000, m, 1).ToString("MMMM"))</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    Year
+                    <select @bind="_form.Year">
+                        @for (int y = DateTime.Now.Year; y <= DateTime.Now.Year + 1; y++)
+                        {
+                            <option value="@y">@y</option>
+                        }
+                    </select>
+                </label>
+            </div>
+            @if (_error is not null) { <p class="error">@_error</p> }
+            <button class="btn-primary" @onclick="Submit" disabled="@_submitting">
+                @(_submitting ? "Saving..." : "Save Budget")
+            </button>
+        </div>
+    }
+
+    <p class="info">Showing budgets for <strong>@(new DateTime(2000, _month, 1).ToString("MMMM"))</strong> @_year in @_preferredCurrency.</p>
+
+    @if (_dashboard?.ActiveBudgets?.Any() == true)
+    {
+        <div class="budget-list">
+            @foreach (var b in _dashboard.ActiveBudgets)
+            {
+                var pct = Math.Min(b.PercentageUsed, 100);
+                var color = pct >= 90 ? "#e74c3c" : pct >= 70 ? "#f39c12" : "#2ecc71";
+                <div class="budget-card">
+                    <div class="budget-top">
+                        <h3>@((TransactionCategory)b.Category)</h3>
+                        <button class="btn-delete" @onclick="() => Delete(b.Id)">✕</button>
+                    </div>
+                    <div class="budget-amounts">
+                        <span class="spent">@b.SpentAmount.ToString("N2") @b.Currency spent</span>
+                        <span class="limit">of @b.LimitAmount.ToString("N2") @b.Currency limit</span>
+                    </div>
+                    <div class="bar-wrap">
+                        <div class="bar" style="width:@(pct)%; background:@color"></div>
+                    </div>
+                    <div class="budget-footer">
+                        <span>@b.PercentageUsed.ToString("F1")% used</span>
+                        <span>@b.RemainingAmount.ToString("N2") @b.Currency remaining</span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else if (!_loading)
+    {
+        <div class="empty-state">
+            <p>No budgets set for this period. Create one to start tracking your spending limits!</p>
+        </div>
+    }
+    else
+    {
+        <p>Loading...</p>
+    }
+</div>
+
+@code {
+    private FinanceTracker.Contracts.DashboardDto? _dashboard;
+    private bool _loading = true, _showForm, _submitting;
+    private string? _error;
+    private int _month = DateTime.Now.Month, _year = DateTime.Now.Year;
+    private string _preferredCurrency = "USD";
+    private FormModel _form = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await Api.IsAuthenticatedAsync()) { Nav.NavigateTo("/login"); return; }
+        _preferredCurrency = await Api.GetPreferredCurrencyAsync() ?? "USD";
+        _form.Currency = _preferredCurrency;
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        _loading = true;
+        _dashboard = await Api.GetDashboardAsync(_month, _year);
+        _preferredCurrency = _dashboard?.Currency ?? _preferredCurrency;
+        _loading = false;
+    }
+
+    private async Task Submit()
+    {
+        _error = null;
+        if (_form.LimitAmount <= 0) { _error = "Limit must be greater than 0."; return; }
+        _submitting = true;
+        var ok = await Api.CreateBudgetAsync(new FinanceTracker.Contracts.CreateBudgetDto(
+            _form.Category, _form.LimitAmount, _form.Currency, _form.Month, _form.Year));
+        _submitting = false;
+        if (ok)
+        {
+            _showForm = false;
+            _form = new();
+            _form.Currency = _preferredCurrency;
+            await Load();
+        }
+        else _error = "Failed to save. A budget for this category/month may already exist.";
+    }
+
+    private async Task Delete(Guid id)
+    {
+        await Api.DeleteBudgetAsync(id);
+        await Load();
+    }
+
+    private enum TransactionCategory
+    {
+        Housing=10,Food,Transport,Healthcare,Entertainment,Shopping,Utilities,Education,Travel,OtherExpense
+    }
+
+    private class FormModel
+    {
+        public int Category { get; set; } = 11;
+        public decimal LimitAmount { get; set; }
+        public string Currency { get; set; } = "USD";
+        public int Month { get; set; } = DateTime.Now.Month;
+        public int Year { get; set; } = DateTime.Now.Year;
+    }
+}
+
+<style>
+    .budgets-page { max-width: 900px; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .page-header h1 { margin: 0; }
+    .btn-primary { background: #3498db; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; }
+    .form-card { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    .form-card h2 { margin: 0 0 1rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .form-grid label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; color: #555; }
+    .form-grid input, .form-grid select { padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; }
+    .info { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .budget-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .budget-card { background: white; border-radius: 12px; padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    .budget-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+    .budget-top h3 { margin: 0; font-size: 1rem; }
+    .budget-amounts { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.5rem; }
+    .limit { color: #888; }
+    .bar-wrap { background: #f0f0f0; border-radius: 99px; height: 8px; overflow: hidden; margin-bottom: 0.5rem; }
+    .bar { height: 100%; border-radius: 99px; transition: width 0.4s; }
+    .budget-footer { display: flex; justify-content: space-between; font-size: 0.8rem; color: #888; }
+    .btn-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 1rem; }
+    .btn-delete:hover { color: #e74c3c; }
+    .error { color: #e74c3c; font-size: 0.85rem; margin-bottom: 0.5rem; }
+    .empty-state { text-align: center; padding: 3rem; color: #aaa; }
+</style>

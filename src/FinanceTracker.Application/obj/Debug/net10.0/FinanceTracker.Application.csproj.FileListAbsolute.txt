@@ -1,0 +1,17 @@
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/bin/Debug/net10.0/FinanceTracker.Application.deps.json
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/bin/Debug/net10.0/FinanceTracker.Application.dll
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/bin/Debug/net10.0/FinanceTracker.Application.pdb
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/bin/Debug/net10.0/FinanceTracker.Domain.dll
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/bin/Debug/net10.0/FinanceTracker.Domain.pdb
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/obj/Debug/net10.0/FinanceTracker.Application.csproj.AssemblyReference.cache
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/obj/Debug/net10.0/FinanceTracker.Application.GeneratedMSBuildEditorConfig.editorconfig
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/obj/Debug/net10.0/FinanceTracker.Application.AssemblyInfoInputs.cache
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/obj/Debug/net10.0/FinanceTracker.Application.AssemblyInfo.cs
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/obj/Debug/net10.0/FinanceTracker.Application.csproj.CoreCompileInputs.cache
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/obj/Debug/net10.0/FinanceT.00C3F739.Up2Date
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/obj/Debug/net10.0/FinanceTracker.Application.dll
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/obj/Debug/net10.0/refint/FinanceTracker.Application.dll
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/obj/Debug/net10.0/FinanceTracker.Application.pdb
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/obj/Debug/net10.0/ref/FinanceTracker.Application.dll
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/bin/Debug/net10.0/FinanceTracker.Contracts.dll
+/Users/tudor-rapanu/Downloads/FinanceTracker/src/FinanceTracker.Application/bin/Debug/net10.0/FinanceTracker.Contracts.pdb
