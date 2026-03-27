@@ -18,13 +18,13 @@ FinanceTracker/
 
 ### Layer Responsibilities
 
-| Layer | Responsibility |
-|---|---|
-| **Domain** | Core business entities and repository contracts. Zero dependencies. |
-| **Application** | Use cases via CQRS (MediatR). Depends only on Domain. |
+| Layer              | Responsibility                                                                   |
+| ------------------ | -------------------------------------------------------------------------------- |
+| **Domain**         | Core business entities and repository contracts. Zero dependencies.              |
+| **Application**    | Use cases via CQRS (MediatR). Depends only on Domain.                            |
 | **Infrastructure** | EF Core, ASP.NET Identity, JWT, HTTP clients. Implements Application interfaces. |
-| **API** | HTTP endpoints, auth middleware, Swagger. Wires up DI. |
-| **Web** | Blazor WASM frontend. Calls the API via `ApiClient`. |
+| **API**            | HTTP endpoints, auth middleware, Swagger. Wires up DI.                           |
+| **Web**            | Blazor WASM frontend. Calls the API via `ApiClient`.                             |
 
 ---
 
@@ -57,7 +57,7 @@ FinanceTracker/
 ### 1. Clone & Open
 
 ```bash
-git clone <your-repo-url>
+git clone <repo-url>
 cd FinanceTracker
 ```
 
@@ -145,35 +145,40 @@ Frontend runs at: `https://localhost:7200`
 ## 🔑 API Endpoints
 
 ### Auth
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/auth/register` | Register a new user |
-| POST | `/api/auth/login` | Login and get JWT |
+
+| Method | Endpoint             | Description         |
+| ------ | -------------------- | ------------------- |
+| POST   | `/api/auth/register` | Register a new user |
+| POST   | `/api/auth/login`    | Login and get JWT   |
 
 ### Transactions
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/transactions` | List transactions (filter by `?month=&year=`) |
-| GET | `/api/transactions/dashboard` | Dashboard summary |
-| POST | `/api/transactions` | Create a transaction |
-| DELETE | `/api/transactions/{id}` | Delete a transaction |
+
+| Method | Endpoint                      | Description                                   |
+| ------ | ----------------------------- | --------------------------------------------- |
+| GET    | `/api/transactions`           | List transactions (filter by `?month=&year=`) |
+| GET    | `/api/transactions/dashboard` | Dashboard summary                             |
+| POST   | `/api/transactions`           | Create a transaction                          |
+| DELETE | `/api/transactions/{id}`      | Delete a transaction                          |
 
 ### Budgets
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/budgets` | Create a monthly budget |
-| DELETE | `/api/budgets/{id}` | Delete a budget |
+
+| Method | Endpoint            | Description             |
+| ------ | ------------------- | ----------------------- |
+| POST   | `/api/budgets`      | Create a monthly budget |
+| DELETE | `/api/budgets/{id}` | Delete a budget         |
 
 ### Exchange Rates
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/exchangerates?baseCurrency=USD` | Get live exchange rates |
+
+| Method | Endpoint                              | Description             |
+| ------ | ------------------------------------- | ----------------------- |
+| GET    | `/api/exchangerates?baseCurrency=USD` | Get live exchange rates |
 
 ---
 
 ## 🛠️ Key Design Patterns
 
 ### CQRS with MediatR
+
 Commands mutate state; queries read state. Each lives in its own handler class.
 
 ```csharp
@@ -185,6 +190,7 @@ var result = await _mediator.Send(new GetDashboardQuery(month, year));
 ```
 
 ### Result<T> Pattern
+
 Handlers return `Result<T>` instead of throwing exceptions for expected failures:
 
 ```csharp
@@ -193,6 +199,7 @@ return Result<TransactionDto>.Success(dto);
 ```
 
 ### Repository + Unit of Work
+
 ```csharp
 await _uow.Transactions.AddAsync(transaction);
 await _uow.SaveChangesAsync();
@@ -218,18 +225,12 @@ Here are features you can add to extend the project:
 
 ## 📦 NuGet Packages Used
 
-| Package | Purpose |
-|---|---|
-| `MediatR` | CQRS dispatcher |
-| `FluentValidation` | Input validation |
-| `Microsoft.EntityFrameworkCore.SqlServer` | EF Core SQL Server provider |
-| `Microsoft.AspNetCore.Identity.EntityFrameworkCore` | User management |
-| `Microsoft.AspNetCore.Authentication.JwtBearer` | JWT auth middleware |
-| `Swashbuckle.AspNetCore.SwaggerUI` | Swagger UI |
-| `Blazored.LocalStorage` | Token storage in Blazor WASM |
-
----
-
-## 📄 License
-
-MIT — free to use for your portfolio!
+| Package                                             | Purpose                      |
+| --------------------------------------------------- | ---------------------------- |
+| `MediatR`                                           | CQRS dispatcher              |
+| `FluentValidation`                                  | Input validation             |
+| `Microsoft.EntityFrameworkCore.SqlServer`           | EF Core SQL Server provider  |
+| `Microsoft.AspNetCore.Identity.EntityFrameworkCore` | User management              |
+| `Microsoft.AspNetCore.Authentication.JwtBearer`     | JWT auth middleware          |
+| `Swashbuckle.AspNetCore.SwaggerUI`                  | Swagger UI                   |
+| `Blazored.LocalStorage`                             | Token storage in Blazor WASM |
