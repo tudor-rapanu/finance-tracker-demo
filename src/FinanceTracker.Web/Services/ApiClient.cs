@@ -14,6 +14,24 @@ public class ApiClient
 
     private const string TokenKey = "authToken";
 
+    public record ApiResult(bool Success, string? Error = null)
+    {
+        public static ApiResult Ok() => new(true);
+        public static ApiResult Fail(string? error) => new(false, string.IsNullOrWhiteSpace(error) ? "Request failed." : error);
+    }
+
+    public record ApiResult<T>(bool Success, T? Data = default, string? Error = null, int? StatusCode = null)
+    {
+        public static ApiResult<T> Ok(T data) => new(true, data);
+        public static ApiResult<T> Fail(string? error, int? statusCode = null) =>
+            new(false, default, string.IsNullOrWhiteSpace(error) ? "Request failed." : error, statusCode);
+    }
+
+    private sealed class ApiErrorResponse
+    {
+        public string? Error { get; set; }
+    }
+
     public ApiClient(HttpClient http, IJSRuntime js)
     {
         _http = http;
@@ -37,41 +55,68 @@ public class ApiClient
             _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
+    private static async Task<string?> TryReadErrorAsync(HttpResponseMessage response)
+    {
+        try
+        {
+            var body = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
+            if (!string.IsNullOrWhiteSpace(body?.Error))
+                return body.Error;
+        }
+        catch
+        {
+            // Ignore JSON parsing errors and fall back to status text.
+        }
+
+        return response.ReasonPhrase;
+    }
+
     // ── Auth ──
-    public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
+    public async Task<(AuthResponseDto? Data, string? Error)> LoginAsync(LoginDto dto)
     {
         var response = await _http.PostAsJsonAsync("api/auth/login", dto);
-        if (!response.IsSuccessStatusCode) return null;
+        if (!response.IsSuccessStatusCode)
+            return (null, await TryReadErrorAsync(response));
+
         var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
         if (result is not null)
             await SetTokenAsync(result.Token);
-        return result;
+
+        return result is null
+            ? (null, "Invalid response from server.")
+            : (result, null);
     }
 
-    public async Task<AuthResponseDto?> RegisterAsync(RegisterDto dto)
+    public async Task<(AuthResponseDto? Data, string? Error)> RegisterAsync(RegisterDto dto)
     {
         var response = await _http.PostAsJsonAsync("api/auth/register", dto);
-        if (!response.IsSuccessStatusCode) return null;
+        if (!response.IsSuccessStatusCode)
+            return (null, await TryReadErrorAsync(response));
+
         var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
         if (result is not null)
             await SetTokenAsync(result.Token);
-        return result;
+
+        return result is null
+            ? (null, "Invalid response from server.")
+            : (result, null);
     }
 
-    public async Task<bool> UpdatePreferredCurrencyAsync(string preferredCurrency)
+    public async Task<ApiResult> UpdatePreferredCurrencyAsync(string preferredCurrency)
     {
         await AttachTokenAsync();
         var response = await _http.PutAsJsonAsync(
             "api/auth/preferred-currency",
             new UpdatePreferredCurrencyDto(preferredCurrency));
 
-        if (!response.IsSuccessStatusCode) return false;
+        if (!response.IsSuccessStatusCode)
+            return ApiResult.Fail(await TryReadErrorAsync(response));
 
         var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
-        if (result is null) return false;
+        if (result is null) return ApiResult.Fail("Invalid response from server.");
 
         await SetTokenAsync(result.Token);
-        return true;
+        return ApiResult.Ok();
     }
 
     public async Task LogoutAsync() =>
@@ -88,19 +133,33 @@ public class ApiClient
         return await _http.GetFromJsonAsync<List<TransactionDto>>($"api/transactions{query}") ?? new();
     }
 
-    public async Task<DashboardDto?> GetDashboardAsync(int? month = null, int? year = null)
+    public async Task<ApiResult<DashboardDto>> GetDashboardAsync(int? month = null, int? year = null)
     {
         await AttachTokenAsync();
         var now = DateTime.Now;
-        return await _http.GetFromJsonAsync<DashboardDto>(
+
+        var response = await _http.GetAsync(
             $"api/transactions/dashboard?month={month ?? now.Month}&year={year ?? now.Year}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await TryReadErrorAsync(response);
+            return ApiResult<DashboardDto>.Fail(error, (int)response.StatusCode);
+        }
+
+        var data = await response.Content.ReadFromJsonAsync<DashboardDto>();
+        if (data is null)
+            return ApiResult<DashboardDto>.Fail("Invalid response from server.", (int)response.StatusCode);
+
+        return ApiResult<DashboardDto>.Ok(data);
     }
 
-    public async Task<bool> CreateTransactionAsync(CreateTransactionDto dto)
+    public async Task<ApiResult> CreateTransactionAsync(CreateTransactionDto dto)
     {
         await AttachTokenAsync();
         var response = await _http.PostAsJsonAsync("api/transactions", dto);
-        return response.IsSuccessStatusCode;
+        if (response.IsSuccessStatusCode) return ApiResult.Ok();
+        return ApiResult.Fail(await TryReadErrorAsync(response));
     }
 
     public async Task<bool> DeleteTransactionAsync(Guid id)
@@ -111,11 +170,12 @@ public class ApiClient
     }
 
     // ── Budgets ──
-    public async Task<bool> CreateBudgetAsync(CreateBudgetDto dto)
+    public async Task<ApiResult> CreateBudgetAsync(CreateBudgetDto dto)
     {
         await AttachTokenAsync();
         var response = await _http.PostAsJsonAsync("api/budgets", dto);
-        return response.IsSuccessStatusCode;
+        if (response.IsSuccessStatusCode) return ApiResult.Ok();
+        return ApiResult.Fail(await TryReadErrorAsync(response));
     }
 
     public async Task<bool> DeleteBudgetAsync(Guid id)
@@ -193,11 +253,12 @@ public class ApiClient
         return await _http.GetFromJsonAsync<AdminDashboardDto>("api/admin/dashboard");
     }
 
-    public async Task<bool> SetUserRoleAsync(SetUserRoleDto dto)
+    public async Task<ApiResult> SetUserRoleAsync(SetUserRoleDto dto)
     {
         await AttachTokenAsync();
         var response = await _http.PutAsJsonAsync("api/admin/users/role", dto);
-        return response.IsSuccessStatusCode;
+        if (response.IsSuccessStatusCode) return ApiResult.Ok();
+        return ApiResult.Fail(await TryReadErrorAsync(response));
     }
 }
 

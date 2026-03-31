@@ -96,13 +96,14 @@
     }
     else
     {
-        <p>Could not load dashboard. <a href="/login">Please log in.</a></p>
+        <p>@_errorMessage <a href="/login">Please log in.</a></p>
     }
 </div>
 
 @code {
     private FinanceTracker.Contracts.DashboardDto? _dashboard;
     private bool _loading = true;
+    private string _errorMessage = "Could not load dashboard.";
     private int SelectedMonth = DateTime.Now.Month;
     private int SelectedYear = DateTime.Now.Year;
 
@@ -119,7 +120,25 @@
     private async Task LoadData()
     {
         _loading = true;
-        _dashboard = await Api.GetDashboardAsync(SelectedMonth, SelectedYear);
+        var result = await Api.GetDashboardAsync(SelectedMonth, SelectedYear);
+
+        if (!result.Success)
+        {
+            _dashboard = null;
+            _errorMessage = result.Error ?? "Could not load dashboard.";
+
+            if (result.StatusCode == 401)
+            {
+                await Api.LogoutAsync();
+                Nav.NavigateTo("/login", forceLoad: true);
+                return;
+            }
+        }
+        else
+        {
+            _dashboard = result.Data;
+        }
+
         _loading = false;
     }
 
@@ -129,31 +148,3 @@
         Housing=10,Food,Transport,Healthcare,Entertainment,Shopping,Utilities,Education,Travel,OtherExpense
     }
 }
-
-<style>
-    .dashboard { max-width: 1000px; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-    .page-header h1 { margin: 0; }
-    .period-picker { display: flex; gap: 0.5rem; }
-    .period-picker select, .period-picker button { padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid #ccc; }
-    .period-picker button { background: #3498db; color: white; border: none; cursor: pointer; }
-    .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-    .card { background: white; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.4rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-    .card .label { font-size: 0.85rem; color: #888; }
-    .card .value { font-size: 1.8rem; font-weight: 700; }
-    .card.income .value { color: #2ecc71; }
-    .card.expense .value { color: #e74c3c; }
-    .card.net.positive .value { color: #3498db; }
-    .card.net.negative .value { color: #e74c3c; }
-    .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-    .section { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-    .section h2 { margin: 0 0 1rem; font-size: 1rem; color: #333; }
-    .category-row { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.7rem; font-size: 0.9rem; }
-    .category-row span:first-child { width: 110px; }
-    .category-row span:last-child { width: 70px; text-align: right; }
-    .bar-wrap { flex: 1; background: #f0f0f0; border-radius: 99px; height: 8px; overflow: hidden; }
-    .bar { height: 100%; background: #3498db; border-radius: 99px; transition: width 0.4s; }
-    .budget-row { margin-bottom: 1rem; }
-    .budget-header { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.3rem; }
-    .empty { color: #aaa; font-size: 0.9rem; }
-</style>

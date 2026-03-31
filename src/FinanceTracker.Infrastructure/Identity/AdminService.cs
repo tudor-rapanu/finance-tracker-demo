@@ -81,6 +81,8 @@ public class AdminService : IAdminService
 
     public async Task SetUserRoleAsync(string userId, string role, bool assign)
     {
+        role = role.Trim();
+
         var user = await _userManager.FindByIdAsync(userId)
             ?? throw new Exception($"User '{userId}' not found.");
 

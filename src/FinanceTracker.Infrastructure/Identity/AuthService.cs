@@ -34,17 +34,24 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
     {
-        var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+        var normalizedEmail = dto.Email.Trim();
+        var normalizedFirstName = dto.FirstName.Trim();
+        var normalizedLastName = dto.LastName.Trim();
+        var normalizedCurrency = string.IsNullOrWhiteSpace(dto.PreferredCurrency)
+            ? "USD"
+            : dto.PreferredCurrency.Trim().ToUpperInvariant();
+
+        var existingUser = await _userManager.FindByEmailAsync(normalizedEmail);
         if (existingUser is not null)
             throw new Exception("Email already registered.");
 
         var user = new AppUser
         {
-            UserName = dto.Email,
-            Email = dto.Email,
-            FirstName = dto.FirstName,
-            LastName = dto.LastName,
-            PreferredCurrency = string.IsNullOrWhiteSpace(dto.PreferredCurrency) ? "USD" : dto.PreferredCurrency
+            UserName = normalizedEmail,
+            Email = normalizedEmail,
+            FirstName = normalizedFirstName,
+            LastName = normalizedLastName,
+            PreferredCurrency = normalizedCurrency
         };
 
         var result = await _userManager.CreateAsync(user, dto.Password);
@@ -58,7 +65,9 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
     {
-        var user = await _userManager.FindByEmailAsync(dto.Email)
+        var normalizedEmail = dto.Email.Trim();
+
+        var user = await _userManager.FindByEmailAsync(normalizedEmail)
             ?? throw new Exception("Invalid credentials.");
 
         if (!await _userManager.CheckPasswordAsync(user, dto.Password))

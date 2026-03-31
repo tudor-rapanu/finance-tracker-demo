@@ -30,20 +30,23 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
             return Result<TransactionDto>.Failure("User not authenticated.");
 
         var dto = request.Dto;
+        var normalizedCurrency = dto.Currency.Trim().ToUpperInvariant();
+        var normalizedDescription = dto.Description.Trim();
+        var normalizedNotes = string.IsNullOrWhiteSpace(dto.Notes) ? null : dto.Notes.Trim();
         var preferredCurrency = _currentUser.PreferredCurrency ?? "USD";
-        var amountInPreferred = await _exchangeRateService.ConvertAsync(dto.Amount, dto.Currency, preferredCurrency);
+        var amountInPreferred = await _exchangeRateService.ConvertAsync(dto.Amount, normalizedCurrency, preferredCurrency);
 
         var transaction = new Transaction
         {
             UserId = _currentUser.UserId,
             Amount = dto.Amount,
-            Currency = dto.Currency,
+            Currency = normalizedCurrency,
             AmountInBaseCurrency = amountInPreferred,
             Type = (TransactionType)dto.Type,
             Category = (TransactionCategory)dto.Category,
-            Description = dto.Description,
+            Description = normalizedDescription,
             Date = dto.Date,
-            Notes = dto.Notes
+            Notes = normalizedNotes
         };
 
         await _uow.Transactions.AddAsync(transaction);

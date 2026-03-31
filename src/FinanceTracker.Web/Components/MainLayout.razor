@@ -4,14 +4,26 @@
 @inject FinanceTracker.Web.Services.ApiClient Api
 
 <div class="layout">
-    <nav class="sidebar">
-        <div class="logo">💰 FinTracker</div>
-        <NavLink href="/" Match="NavLinkMatch.All">🏠 Dashboard</NavLink>
-        <NavLink href="/transactions">💳 Transactions</NavLink>
-        <NavLink href="/budgets">📊 Budgets</NavLink>
+    <div class="mobile-topbar">
+        <button class="mobile-menu-button" @onclick="ToggleSidebar" aria-controls="sidebarNav" aria-expanded="@_sidebarOpen">
+            @(_sidebarOpen ? "Close" : "Menu")
+        </button>
+        <div class="mobile-topbar-brand">FinTracker</div>
+    </div>
+
+    <div class="mobile-backdrop @(_sidebarOpen ? "show" : string.Empty)" @onclick="CloseSidebar"></div>
+
+    <nav id="sidebarNav" class="sidebar @(_sidebarOpen ? "open" : string.Empty)">
+        <div class="sidebar-header">
+            <div class="logo">💰 FinTracker</div>
+            <button class="sidebar-close-button" @onclick="CloseSidebar" aria-label="Close menu">Close</button>
+        </div>
+        <NavLink href="/" Match="NavLinkMatch.All" @onclick="CloseSidebar">🏠 Dashboard</NavLink>
+        <NavLink href="/transactions" @onclick="CloseSidebar">💳 Transactions</NavLink>
+        <NavLink href="/budgets" @onclick="CloseSidebar">📊 Budgets</NavLink>
         @if (_isAdmin)
         {
-            <NavLink href="/admin">🛡️ Admin</NavLink>
+            <NavLink href="/admin" @onclick="CloseSidebar">🛡️ Admin</NavLink>
         }
         <div class="currency-box">
             <label for="preferredCurrency">Currency</label>
@@ -28,10 +40,17 @@
             </button>
             @if (!string.IsNullOrWhiteSpace(_currencyMessage))
             {
-                <div class="currency-message">@_currencyMessage</div>
+                <div class="status-block @(_currencyMessageIsSuccess ? "success" : "error")" role="status" aria-live="polite">
+                    <ul>
+                        @foreach (var line in SplitMessageLines(_currencyMessage))
+                        {
+                            <li>@line</li>
+                        }
+                    </ul>
+                </div>
             }
         </div>
-        <div style="margin-top:auto">
+        <div class="logout-container">
             <button @onclick="Logout">🚪 Logout</button>
         </div>
     </nav>
@@ -45,6 +64,8 @@
     private string _preferredCurrency = "USD";
     private bool _savingCurrency;
     private string? _currencyMessage;
+    private bool _currencyMessageIsSuccess;
+    private bool _sidebarOpen;
 
     protected override async Task OnInitializedAsync()
     {
@@ -56,37 +77,44 @@
     {
         _savingCurrency = true;
         _currencyMessage = null;
+        _currencyMessageIsSuccess = false;
 
-        var success = await Api.UpdatePreferredCurrencyAsync(_preferredCurrency);
-        _currencyMessage = success
+        var result = await Api.UpdatePreferredCurrencyAsync(_preferredCurrency);
+        _currencyMessage = result.Success
             ? "Currency updated."
-            : "Could not update currency.";
+            : result.Error ?? "Could not update currency.";
+        _currencyMessageIsSuccess = result.Success;
 
         _savingCurrency = false;
 
-        if (success)
+        if (result.Success)
             Nav.NavigateTo(Nav.Uri, forceLoad: true);
+    }
+
+    private void ToggleSidebar()
+    {
+        _sidebarOpen = !_sidebarOpen;
+    }
+
+    private void CloseSidebar()
+    {
+        _sidebarOpen = false;
     }
 
     private async Task Logout()
     {
+        _sidebarOpen = false;
         await Api.LogoutAsync();
         Nav.NavigateTo("/login", forceLoad: true);
     }
-}
 
-<style>
-    .layout { display: flex; min-height: 100vh; font-family: 'Segoe UI', sans-serif; }
-    .sidebar { width: 220px; background: #1a1a2e; color: white; padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
-    .logo { font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; }
-    .sidebar a { color: #ccc; text-decoration: none; padding: 0.6rem 0.8rem; border-radius: 8px; display: block; }
-    .sidebar a:hover, .sidebar a.active { background: #16213e; color: white; }
-    .currency-box { margin-top: 1rem; padding: 0.6rem; border: 1px solid #2f3a57; border-radius: 8px; display: flex; flex-direction: column; gap: 0.4rem; }
-    .currency-box label { font-size: 0.75rem; color: #b9c0d2; text-transform: uppercase; letter-spacing: 0.04em; }
-    .currency-box select { width: 100%; padding: 0.45rem 0.55rem; border-radius: 6px; border: 1px solid #415278; background: #10182d; color: white; }
-    .btn-save-currency { width: 100%; padding: 0.45rem; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; }
-    .btn-save-currency:disabled { opacity: 0.7; cursor: not-allowed; }
-    .currency-message { font-size: 0.72rem; color: #a9d6ff; }
-    .sidebar button { width: 100%; padding: 0.6rem; background: #e74c3c; color: white; border: none; border-radius: 8px; cursor: pointer; }
-    .content { flex: 1; padding: 2rem; background: #f4f6f9; }
-</style>
+    private static IEnumerable<string> SplitMessageLines(string? message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return Array.Empty<string>();
+
+        return message
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(s => !string.IsNullOrWhiteSpace(s));
+    }
+}

@@ -1,0 +1,116 @@
+h1 {
+  margin-bottom: 1.5rem;
+}
+h2 {
+  margin: 2rem 0 1rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.2rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card.income {
+  border-left: 4px solid #2ecc71;
+}
+.stat-card.expense {
+  border-left: 4px solid #e74c3c;
+}
+.stat-label {
+  font-size: 0.8rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-top: 0.25rem;
+}
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.user-table th {
+  background: #1a1a2e;
+  color: white;
+  padding: 0.8rem 1rem;
+  text-align: left;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.user-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.9rem;
+}
+
+.user-table tr:last-child td {
+  border-bottom: none;
+}
+
+.btn-promote,
+.btn-demote {
+  padding: 0.35rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.btn-promote {
+  background: #3498db;
+  color: white;
+}
+.btn-promote:hover {
+  background: #2980b9;
+}
+.btn-demote {
+  background: #e74c3c;
+  color: white;
+}
+.btn-demote:hover {
+  background: #c0392b;
+}
+
+.status-block {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+.status-block ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+.status-block li + li {
+  margin-top: 0.25rem;
+}
+.status-block.success {
+  background: #d9f3e4;
+  border-color: #8fd0aa;
+  color: #16543a;
+}
+.status-block.error {
+  background: #fdecea;
+  border-color: #f1a7a0;
+  color: #8a1f17;
+}

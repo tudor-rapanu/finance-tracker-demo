@@ -25,6 +25,8 @@ public class ExchangeRateService : IExchangeRateService
 
     public async Task<ExchangeRateDto> GetRatesAsync(string baseCurrency = "USD")
     {
+        var normalizedBaseCurrency = NormalizeCurrency(baseCurrency);
+
         // Return cached rates if still valid (cache for 1 hour)
         if (_cachedRates is not null && DateTime.UtcNow < _cacheExpiry)
             return _cachedRates;
@@ -32,7 +34,7 @@ public class ExchangeRateService : IExchangeRateService
         try
         {
             var apiKey = _config["ExchangeRateApi:ApiKey"];
-            var url = $"https://v6.exchangerate-api.com/v6/{apiKey}/latest/{baseCurrency}";
+            var url = $"https://v6.exchangerate-api.com/v6/{apiKey}/latest/{normalizedBaseCurrency}";
 
             var response = await _httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
@@ -45,7 +47,7 @@ public class ExchangeRateService : IExchangeRateService
                 .EnumerateObject()
                 .ToDictionary(p => p.Name, p => p.Value.GetDecimal());
 
-            _cachedRates = new ExchangeRateDto(baseCurrency, rates, DateTime.UtcNow);
+            _cachedRates = new ExchangeRateDto(normalizedBaseCurrency, rates, DateTime.UtcNow);
             _cacheExpiry = DateTime.UtcNow.AddHours(1);
 
             return _cachedRates;
@@ -60,6 +62,9 @@ public class ExchangeRateService : IExchangeRateService
 
     public async Task<decimal> ConvertAsync(decimal amount, string from, string to)
     {
+        from = NormalizeCurrency(from);
+        to = NormalizeCurrency(to);
+
         if (from == to) return amount;
 
         var rates = await GetRatesAsync("USD");
@@ -69,5 +74,17 @@ public class ExchangeRateService : IExchangeRateService
 
         // Convert: amount -> USD -> target currency
         return amount / fromRate * toRate;
+    }
+
+    private static string NormalizeCurrency(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "USD";
+
+        var normalized = value.Trim().ToUpperInvariant();
+        if (normalized.Length != 3 || normalized.Any(c => c is < 'A' or > 'Z'))
+            return "USD";
+
+        return normalized;
     }
 }

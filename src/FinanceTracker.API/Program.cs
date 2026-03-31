@@ -1,7 +1,14 @@
 using FinanceTracker.API.Extensions;
 using FinanceTracker.API.Middleware;
+using FinanceTracker.Application.Admin.Commands;
+using FinanceTracker.Application.Auth.Commands;
+using FinanceTracker.Application.Budgets.Commands;
+using FinanceTracker.Application.Common.Behaviors;
 using FinanceTracker.Application.Interfaces;
+using FinanceTracker.Application.Transactions.Commands;
+using FinanceTracker.Application.Transactions.Queries;
 using FinanceTracker.Infrastructure;
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 
@@ -14,6 +21,17 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(
         typeof(FinanceTracker.Application.Transactions.Commands.CreateTransactionCommand).Assembly));
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+// FluentValidation validators
+builder.Services.AddTransient<IValidator<RegisterCommand>, RegisterCommandValidator>();
+builder.Services.AddTransient<IValidator<LoginCommand>, LoginCommandValidator>();
+builder.Services.AddTransient<IValidator<UpdatePreferredCurrencyCommand>, UpdatePreferredCurrencyCommandValidator>();
+builder.Services.AddTransient<IValidator<CreateTransactionCommand>, CreateTransactionCommandValidator>();
+builder.Services.AddTransient<IValidator<CreateBudgetCommand>, CreateBudgetCommandValidator>();
+builder.Services.AddTransient<IValidator<GetTransactionsQuery>, GetTransactionsQueryValidator>();
+builder.Services.AddTransient<IValidator<GetDashboardQuery>, GetDashboardQueryValidator>();
+builder.Services.AddTransient<IValidator<SetUserRoleCommand>, SetUserRoleCommandValidator>();
 
 // ── Current User ──
 builder.Services.AddHttpContextAccessor();

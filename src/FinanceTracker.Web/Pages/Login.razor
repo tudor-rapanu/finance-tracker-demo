@@ -41,7 +41,14 @@
 
         @if (_error is not null)
         {
-            <p class="error">@_error</p>
+            <div class="error-block" role="alert" aria-live="polite">
+                <ul>
+                    @foreach (var line in SplitErrorLines(_error))
+                    {
+                        <li>@line</li>
+                    }
+                </ul>
+            </div>
         }
 
         <button class="btn-submit" @onclick="Submit" disabled="@_loading">
@@ -77,72 +84,32 @@
 
         if (_isRegister)
         {
-            var result = await Api.RegisterAsync(new FinanceTracker.Contracts.RegisterDto(
+            var (result, error) = await Api.RegisterAsync(new FinanceTracker.Contracts.RegisterDto(
                 _firstName, _lastName, _email, _password, _currency));
             if (result is not null)
                 Nav.NavigateTo("/");
             else
-                _error = "Registration failed. Email may already be in use.";
+                _error = error ?? "Registration failed. Email may already be in use.";
         }
         else
         {
-            var result = await Api.LoginAsync(new FinanceTracker.Contracts.LoginDto(_email, _password));
+            var (result, error) = await Api.LoginAsync(new FinanceTracker.Contracts.LoginDto(_email, _password));
             if (result is not null)
                 Nav.NavigateTo("/");
             else
-                _error = "Invalid email or password.";
+                _error = error ?? "Invalid email or password.";
         }
 
         _loading = false;
     }
+
+    private static IEnumerable<string> SplitErrorLines(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+            return Array.Empty<string>();
+
+        return error
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(s => !string.IsNullOrWhiteSpace(s));
+    }
 }
-
-<style>
-    body { margin: 0; }
-    .auth-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        background: #f4f6f9;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    .auth-card {
-        background: white;
-        border-radius: 16px;
-        padding: 2.5rem;
-        width: 100%;
-        max-width: 400px;
-        box-shadow: 0 4px 24px rgba(0,0,0,.08);
-    }
-    .logo { font-size: 1.6rem; text-align: center; margin-bottom: 0.5rem; }
-    h2 { text-align: center; margin: 0 0 1.5rem; color: #333; }
-    .form-group { margin-bottom: 1rem; }
-    .form-group label { display: block; font-size: 0.85rem; color: #555; margin-bottom: 0.3rem; }
-    .form-group input, .form-group select {
-        width: 100%;
-        padding: 0.6rem 0.8rem;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        box-sizing: border-box;
-    }
-    .btn-submit {
-        width: 100%;
-        padding: 0.75rem;
-        background: #3498db;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 1rem;
-        cursor: pointer;
-        margin-top: 0.5rem;
-    }
-    .btn-submit:hover { background: #2980b9; }
-    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-    .error { color: #e74c3c; font-size: 0.85rem; text-align: center; margin-top: 0.5rem; }
-    .toggle { text-align: center; font-size: 0.85rem; color: #777; margin-top: 1rem; }
-    .toggle a { color: #3498db; cursor: pointer; text-decoration: none; }
-    .toggle a:hover { text-decoration: underline; }
-</style>
-

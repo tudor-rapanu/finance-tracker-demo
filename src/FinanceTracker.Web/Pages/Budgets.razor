@@ -62,7 +62,17 @@
                     </select>
                 </label>
             </div>
-            @if (_error is not null) { <p class="error">@_error</p> }
+              @if (_error is not null)
+              {
+                  <div class="error-block" role="alert" aria-live="polite">
+                      <ul>
+                          @foreach (var line in SplitErrorLines(_error))
+                          {
+                              <li>@line</li>
+                          }
+                      </ul>
+                  </div>
+              }
             <button class="btn-primary" @onclick="Submit" disabled="@_submitting">
                 @(_submitting ? "Saving..." : "Save Budget")
             </button>
@@ -129,8 +139,13 @@
     private async Task Load()
     {
         _loading = true;
-        _dashboard = await Api.GetDashboardAsync(_month, _year);
+        var result = await Api.GetDashboardAsync(_month, _year);
+        _dashboard = result.Data;
         _preferredCurrency = _dashboard?.Currency ?? _preferredCurrency;
+
+        if (!result.Success)
+            _error = result.Error ?? "Could not load budgets.";
+
         _loading = false;
     }
 
@@ -139,23 +154,33 @@
         _error = null;
         if (_form.LimitAmount <= 0) { _error = "Limit must be greater than 0."; return; }
         _submitting = true;
-        var ok = await Api.CreateBudgetAsync(new FinanceTracker.Contracts.CreateBudgetDto(
+        var result = await Api.CreateBudgetAsync(new FinanceTracker.Contracts.CreateBudgetDto(
             _form.Category, _form.LimitAmount, _form.Currency, _form.Month, _form.Year));
         _submitting = false;
-        if (ok)
+        if (result.Success)
         {
             _showForm = false;
             _form = new();
             _form.Currency = _preferredCurrency;
             await Load();
         }
-        else _error = "Failed to save. A budget for this category/month may already exist.";
+        else _error = result.Error ?? "Failed to save. A budget for this category/month may already exist.";
     }
 
     private async Task Delete(Guid id)
     {
         await Api.DeleteBudgetAsync(id);
         await Load();
+    }
+
+    private static IEnumerable<string> SplitErrorLines(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+            return Array.Empty<string>();
+
+        return error
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(s => !string.IsNullOrWhiteSpace(s));
     }
 
     private enum TransactionCategory
@@ -172,29 +197,3 @@
         public int Year { get; set; } = DateTime.Now.Year;
     }
 }
-
-<style>
-    .budgets-page { max-width: 900px; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-    .page-header h1 { margin: 0; }
-    .btn-primary { background: #3498db; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; }
-    .form-card { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-    .form-card h2 { margin: 0 0 1rem; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
-    .form-grid label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; color: #555; }
-    .form-grid input, .form-grid select { padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; }
-    .info { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; }
-    .budget-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
-    .budget-card { background: white; border-radius: 12px; padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-    .budget-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
-    .budget-top h3 { margin: 0; font-size: 1rem; }
-    .budget-amounts { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.5rem; }
-    .limit { color: #888; }
-    .bar-wrap { background: #f0f0f0; border-radius: 99px; height: 8px; overflow: hidden; margin-bottom: 0.5rem; }
-    .bar { height: 100%; border-radius: 99px; transition: width 0.4s; }
-    .budget-footer { display: flex; justify-content: space-between; font-size: 0.8rem; color: #888; }
-    .btn-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 1rem; }
-    .btn-delete:hover { color: #e74c3c; }
-    .error { color: #e74c3c; font-size: 0.85rem; margin-bottom: 0.5rem; }
-    .empty-state { text-align: center; padding: 3rem; color: #aaa; }
-</style>

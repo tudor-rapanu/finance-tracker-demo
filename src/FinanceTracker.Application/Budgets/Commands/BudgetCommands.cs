@@ -27,12 +27,13 @@ public class CreateBudgetCommandHandler : IRequestHandler<CreateBudgetCommand, R
             return Result<BudgetDto>.Failure("User not authenticated.");
 
         var dto = request.Dto;
+        var normalizedCurrency = dto.Currency.Trim().ToUpperInvariant();
         var budget = new Budget
         {
             UserId = _currentUser.UserId,
             Category = (TransactionCategory)dto.Category,
             LimitAmount = dto.LimitAmount,
-            Currency = dto.Currency,
+            Currency = normalizedCurrency,
             Month = dto.Month,
             Year = dto.Year
         };
