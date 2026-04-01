@@ -1,0 +1,46 @@
+@if (_visible)
+{
+    <div class="confirm-backdrop" @onclick="Cancel">
+        <div class="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message" @onclick:stopPropagation>
+            <p id="confirm-title" class="confirm-title">@_title</p>
+            <p id="confirm-message" class="confirm-body">@_message</p>
+            <div class="confirm-actions">
+                <button class="confirm-btn-cancel" @onclick="Cancel">Cancel</button>
+                <button class="confirm-btn-ok @_confirmClass" @onclick="Confirm">@_confirmLabel</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _visible;
+    private string _title = "";
+    private string _message = "";
+    private string _confirmLabel = "Confirm";
+    private string _confirmClass = "";
+    private TaskCompletionSource<bool>? _tcs;
+
+    public Task<bool> ShowAsync(string title, string message, string confirmLabel = "Confirm", bool danger = false)
+    {
+        _title = title;
+        _message = message;
+        _confirmLabel = confirmLabel;
+        _confirmClass = danger ? "danger" : "";
+        _visible = true;
+        _tcs = new TaskCompletionSource<bool>();
+        StateHasChanged();
+        return _tcs.Task;
+    }
+
+    private void Confirm()
+    {
+        _visible = false;
+        _tcs?.TrySetResult(true);
+    }
+
+    private void Cancel()
+    {
+        _visible = false;
+        _tcs?.TrySetResult(false);
+    }
+}

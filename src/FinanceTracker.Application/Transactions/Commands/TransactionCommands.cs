@@ -62,6 +62,8 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
 // --- Delete Transaction ---
 public record DeleteTransactionCommand(Guid Id) : IRequest<Result<bool>>;
 
+public record UpdateTransactionCommand(Guid Id, UpdateTransactionDto Dto) : IRequest<Result<TransactionDto>>;
+
 public class DeleteTransactionCommandHandler : IRequestHandler<DeleteTransactionCommand, Result<bool>>
 {
     private readonly IUnitOfWork _uow;
@@ -87,5 +89,63 @@ public class DeleteTransactionCommandHandler : IRequestHandler<DeleteTransaction
         await _uow.SaveChangesAsync();
 
         return Result<bool>.Success(true);
+    }
+}
+
+public class UpdateTransactionCommandHandler : IRequestHandler<UpdateTransactionCommand, Result<TransactionDto>>
+{
+    private readonly IUnitOfWork _uow;
+    private readonly ICurrentUserService _currentUser;
+    private readonly IExchangeRateService _exchangeRateService;
+
+    public UpdateTransactionCommandHandler(IUnitOfWork uow, ICurrentUserService currentUser, IExchangeRateService exchangeRateService)
+    {
+        _uow = uow;
+        _currentUser = currentUser;
+        _exchangeRateService = exchangeRateService;
+    }
+
+    public async Task<Result<TransactionDto>> Handle(UpdateTransactionCommand request, CancellationToken ct)
+    {
+        if (_currentUser.UserId is null)
+            return Result<TransactionDto>.Failure("User not authenticated.");
+
+        var transaction = await _uow.Transactions.GetByIdAsync(request.Id);
+        if (transaction is null)
+            return Result<TransactionDto>.Failure("Transaction not found.");
+
+        if (transaction.UserId != _currentUser.UserId)
+            return Result<TransactionDto>.Failure("Not authorized.");
+
+        var dto = request.Dto;
+        var normalizedCurrency = dto.Currency.Trim().ToUpperInvariant();
+        var normalizedDescription = dto.Description.Trim();
+        var normalizedNotes = string.IsNullOrWhiteSpace(dto.Notes) ? null : dto.Notes.Trim();
+        var preferredCurrency = _currentUser.PreferredCurrency ?? "USD";
+        var amountInPreferred = await _exchangeRateService.ConvertAsync(dto.Amount, normalizedCurrency, preferredCurrency);
+
+        transaction.Amount = dto.Amount;
+        transaction.Currency = normalizedCurrency;
+        transaction.AmountInBaseCurrency = amountInPreferred;
+        transaction.Type = (TransactionType)dto.Type;
+        transaction.Category = (TransactionCategory)dto.Category;
+        transaction.Description = normalizedDescription;
+        transaction.Date = dto.Date;
+        transaction.Notes = normalizedNotes;
+
+        await _uow.Transactions.UpdateAsync(transaction);
+        await _uow.SaveChangesAsync();
+
+        return Result<TransactionDto>.Success(
+            new TransactionDto(
+                transaction.Id,
+                transaction.Amount,
+                transaction.Currency,
+                transaction.AmountInBaseCurrency,
+                (int)transaction.Type,
+                (int)transaction.Category,
+                transaction.Description,
+                transaction.Date,
+                transaction.Notes));
     }
 }

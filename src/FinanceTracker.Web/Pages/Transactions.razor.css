@@ -107,6 +107,27 @@ td {
   border-top: 1px solid #f0f0f0;
   font-size: 0.9rem;
 }
+.editing-row {
+  background: #f4f8ff;
+}
+.editing-row td {
+  border-top-color: #dbe7fb;
+  border-bottom: none;
+}
+.edit-form-row td {
+  padding: 0;
+  border-top: none;
+}
+.edit-row-panel {
+  padding: 1.1rem 1rem 1rem;
+  background: #f8fbff;
+  border-top: 1px solid #dbe7fb;
+  border-bottom: 1px solid #dbe7fb;
+}
+.edit-row-panel h2 {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+}
 .badge {
   padding: 0.2rem 0.6rem;
   border-radius: 99px;
@@ -121,6 +142,24 @@ td {
   background: #fde8e8;
   color: #c0392b;
 }
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.btn-edit {
+  background: #eef5ff;
+  border: 1px solid #c7dbf7;
+  color: #1f5a9f;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.btn-edit:hover {
+  background: #dcecff;
+}
 .btn-delete {
   background: none;
   border: none;
@@ -130,6 +169,22 @@ td {
 }
 .btn-delete:hover {
   color: #e74c3c;
+}
+.btn-secondary {
+  background: #f2f4f7;
+  color: #333;
+  border: 1px solid #d6dbe1;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  background: #e8edf3;
+}
+.edit-actions {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
 }
 .empty-state {
   text-align: center;

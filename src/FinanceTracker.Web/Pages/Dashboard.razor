@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components.Web
 @inject FinanceTracker.Web.Services.ApiClient Api
 @inject NavigationManager Nav
+@inject PeriodStateService PeriodState
 
 <PageTitle>Dashboard — FinTracker</PageTitle>
 
@@ -114,12 +115,17 @@
             Nav.NavigateTo("/login");
             return;
         }
+
+        await PeriodState.EnsureLoadedAsync();
+        SelectedMonth = PeriodState.Month;
+        SelectedYear = PeriodState.Year;
         await LoadData();
     }
 
     private async Task LoadData()
     {
         _loading = true;
+        await PeriodState.SetAsync(SelectedMonth, SelectedYear);
         var result = await Api.GetDashboardAsync(SelectedMonth, SelectedYear);
 
         if (!result.Success)

@@ -25,6 +25,7 @@ public record CreateTransactionDto(
 public record UpdateTransactionDto(
     decimal Amount,
     string Currency,
+    int Type,
     int Category,
     string Description,
     DateTime Date,
@@ -44,6 +45,14 @@ public record BudgetDto(
 );
 
 public record CreateBudgetDto(
+    int Category,
+    decimal LimitAmount,
+    string Currency,
+    int Month,
+    int Year
+);
+
+public record UpdateBudgetDto(
     int Category,
     decimal LimitAmount,
     string Currency,

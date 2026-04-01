@@ -26,6 +26,9 @@
   border: none;
   cursor: pointer;
 }
+.period-picker button:hover {
+  background: #2d2d4e;
+}
 .stat-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

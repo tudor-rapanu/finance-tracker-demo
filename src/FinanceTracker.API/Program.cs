@@ -29,7 +29,9 @@ builder.Services.AddTransient<IValidator<RegisterCommand>, RegisterCommandValida
 builder.Services.AddTransient<IValidator<LoginCommand>, LoginCommandValidator>();
 builder.Services.AddTransient<IValidator<UpdatePreferredCurrencyCommand>, UpdatePreferredCurrencyCommandValidator>();
 builder.Services.AddTransient<IValidator<CreateTransactionCommand>, CreateTransactionCommandValidator>();
+builder.Services.AddTransient<IValidator<UpdateTransactionCommand>, UpdateTransactionCommandValidator>();
 builder.Services.AddTransient<IValidator<CreateBudgetCommand>, CreateBudgetCommandValidator>();
+builder.Services.AddTransient<IValidator<UpdateBudgetCommand>, UpdateBudgetCommandValidator>();
 builder.Services.AddTransient<IValidator<GetTransactionsQuery>, GetTransactionsQueryValidator>();
 builder.Services.AddTransient<IValidator<GetDashboardQuery>, GetDashboardQueryValidator>();
 builder.Services.AddTransient<IValidator<SetUserRoleCommand>, SetUserRoleCommandValidator>();

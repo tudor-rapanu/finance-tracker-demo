@@ -12,6 +12,14 @@
     <div id="app">
       <div class="loading-container">Loading FinTracker...</div>
     </div>
+    <script>
+      window.finTracker = window.finTracker || {};
+      window.finTracker.scrollIntoView = function (selector) {
+        const element = document.querySelector(selector);
+        if (!element) return;
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      };
+    </script>
     <script src="_framework/blazor.webassembly.js"></script>
   </body>
 </html>

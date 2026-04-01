@@ -1,19 +1,22 @@
 @page "/budgets"
 @using Microsoft.AspNetCore.Components.Web
 @inject FinanceTracker.Web.Services.ApiClient Api
+@inject IJSRuntime JS
 @inject NavigationManager Nav
+@inject ToastService ToastService
+@inject PeriodStateService PeriodState
 
 <PageTitle>Budgets — FinTracker</PageTitle>
 
 <div class="budgets-page">
     <div class="page-header">
         <h1>Budgets</h1>
-        <button class="btn-primary" @onclick="() => _showForm = !_showForm">
-            @(_showForm ? "✕ Cancel" : "+ New Budget")
+        <button class="btn-primary" @onclick="ToggleForm">
+            @(_showForm && !_editingBudgetId.HasValue ? "✕ Cancel" : "+ New Budget")
         </button>
     </div>
 
-    @if (_showForm)
+    @if (_showForm && !_editingBudgetId.HasValue)
     {
         <div class="form-card">
             <h2>Set Monthly Budget</h2>
@@ -73,13 +76,30 @@
                       </ul>
                   </div>
               }
-            <button class="btn-primary" @onclick="Submit" disabled="@_submitting">
-                @(_submitting ? "Saving..." : "Save Budget")
-            </button>
+                        <button class="btn-primary" @onclick="Submit" disabled="@_submitting">
+                                @(_submitting ? "Saving..." : "Save Budget")
+                        </button>
         </div>
     }
 
     <p class="info">Showing budgets for <strong>@(new DateTime(2000, _month, 1).ToString("MMMM"))</strong> @_year in @_preferredCurrency.</p>
+
+    <div class="filter-bar">
+        <select @bind="_month">
+            <option value="0">All months</option>
+            @for (int m = 1; m <= 12; m++)
+            {
+                <option value="@m">@(new DateTime(2000, m, 1).ToString("MMMM"))</option>
+            }
+        </select>
+        <select @bind="_year">
+            @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 3; y--)
+            {
+                <option value="@y">@y</option>
+            }
+        </select>
+        <button @onclick="Load">Filter</button>
+    </div>
 
     @if (_dashboard?.ActiveBudgets?.Any() == true)
     {
@@ -88,10 +108,13 @@
             {
                 var pct = Math.Min(b.PercentageUsed, 100);
                 var color = pct >= 90 ? "#e74c3c" : pct >= 70 ? "#f39c12" : "#2ecc71";
-                <div class="budget-card">
+                <div id="budget-@b.Id" class="budget-card @(_editingBudgetId == b.Id ? "editing" : string.Empty)">
                     <div class="budget-top">
                         <h3>@((TransactionCategory)b.Category)</h3>
-                        <button class="btn-delete" @onclick="() => Delete(b.Id)">✕</button>
+                        <div class="budget-actions">
+                            <button class="btn-edit" @onclick="() => StartEditBudget(b)" title="Edit budget">Edit</button>
+                            <button class="btn-delete" @onclick="() => ConfirmDeleteBudget(b.Id)" title="Delete budget">✕</button>
+                        </div>
                     </div>
                     <div class="budget-amounts">
                         <span class="spent">@b.SpentAmount.ToString("N2") @b.Currency spent</span>
@@ -107,6 +130,75 @@
                 </div>
             }
         </div>
+
+        @if (_editingBudgetId.HasValue)
+        {
+            <div id="budget-edit-panel" class="form-card edit-panel">
+                <h2>Edit Budget</h2>
+                <div class="form-grid compact">
+                    <label>
+                        Category
+                        <select @bind="_form.Category">
+                            <option value="10">Housing</option>
+                            <option value="11">Food</option>
+                            <option value="12">Transport</option>
+                            <option value="13">Healthcare</option>
+                            <option value="14">Entertainment</option>
+                            <option value="15">Shopping</option>
+                            <option value="16">Utilities</option>
+                            <option value="17">Education</option>
+                            <option value="18">Travel</option>
+                            <option value="19">Other Expense</option>
+                        </select>
+                    </label>
+                    <label>
+                        Limit Amount
+                        <input type="number" step="0.01" @bind="_form.LimitAmount" />
+                    </label>
+                    <label>
+                        Currency
+                        <select @bind="_form.Currency">
+                            <option>USD</option><option>EUR</option><option>GBP</option><option>RON</option>
+                        </select>
+                    </label>
+                    <label>
+                        Month
+                        <select @bind="_form.Month">
+                            @for (int m = 1; m <= 12; m++)
+                            {
+                                <option value="@m">@(new DateTime(2000, m, 1).ToString("MMMM"))</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        Year
+                        <select @bind="_form.Year">
+                            @for (int y = DateTime.Now.Year; y <= DateTime.Now.Year + 1; y++)
+                            {
+                                <option value="@y">@y</option>
+                            }
+                        </select>
+                    </label>
+                </div>
+                @if (_error is not null)
+                {
+                    <div class="error-block" role="alert" aria-live="polite">
+                        <ul>
+                            @foreach (var line in SplitErrorLines(_error))
+                            {
+                                <li>@line</li>
+                            }
+                        </ul>
+                    </div>
+                }
+                <div class="inline-edit-actions">
+                    <button class="btn-primary" @onclick="Submit" disabled="@_submitting">
+                        @(_submitting ? "Saving..." : "Update Budget")
+                    </button>
+                    <button class="btn-secondary" @onclick="CancelEditBudget" disabled="@_submitting">Cancel</button>
+                </div>
+            </div>
+        }
     }
     else if (!_loading)
     {
@@ -120,25 +212,43 @@
     }
 </div>
 
+<ConfirmDialog @ref="_confirmDialog" />
+
 @code {
     private FinanceTracker.Contracts.DashboardDto? _dashboard;
     private bool _loading = true, _showForm, _submitting;
     private string? _error;
+    private ConfirmDialog? _confirmDialog;
+    private Guid? _editingBudgetId;
+    private bool _scrollToEditPanel;
     private int _month = DateTime.Now.Month, _year = DateTime.Now.Year;
     private string _preferredCurrency = "USD";
     private FormModel _form = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_scrollToEditPanel)
+            return;
+
+        _scrollToEditPanel = false;
+        await JS.InvokeAsync<object?>("finTracker.scrollIntoView", "#budget-edit-panel");
+    }
 
     protected override async Task OnInitializedAsync()
     {
         if (!await Api.IsAuthenticatedAsync()) { Nav.NavigateTo("/login"); return; }
         _preferredCurrency = await Api.GetPreferredCurrencyAsync() ?? "USD";
-        _form.Currency = _preferredCurrency;
+        await PeriodState.EnsureLoadedAsync();
+        _month = PeriodState.Month;
+        _year = PeriodState.Year;
+        ResetCreateForm();
         await Load();
     }
 
     private async Task Load()
     {
         _loading = true;
+        await PeriodState.SetAsync(_month > 0 ? _month : null, _year);
         var result = await Api.GetDashboardAsync(_month, _year);
         _dashboard = result.Data;
         _preferredCurrency = _dashboard?.Currency ?? _preferredCurrency;
@@ -153,24 +263,96 @@
     {
         _error = null;
         if (_form.LimitAmount <= 0) { _error = "Limit must be greater than 0."; return; }
+        var isEditing = _editingBudgetId.HasValue;
         _submitting = true;
-        var result = await Api.CreateBudgetAsync(new FinanceTracker.Contracts.CreateBudgetDto(
-            _form.Category, _form.LimitAmount, _form.Currency, _form.Month, _form.Year));
+        var result = _editingBudgetId.HasValue
+            ? await Api.UpdateBudgetAsync(_editingBudgetId.Value, new FinanceTracker.Contracts.UpdateBudgetDto(
+                _form.Category, _form.LimitAmount, _form.Currency, _form.Month, _form.Year))
+            : await Api.CreateBudgetAsync(new FinanceTracker.Contracts.CreateBudgetDto(
+                _form.Category, _form.LimitAmount, _form.Currency, _form.Month, _form.Year));
         _submitting = false;
         if (result.Success)
         {
             _showForm = false;
-            _form = new();
-            _form.Currency = _preferredCurrency;
+            _editingBudgetId = null;
+            ResetCreateForm();
             await Load();
+            ToastService.Show(isEditing ? "Budget updated." : "Budget saved.");
         }
         else _error = result.Error ?? "Failed to save. A budget for this category/month may already exist.";
     }
 
-    private async Task Delete(Guid id)
+    private void ToggleForm()
     {
+        if (_editingBudgetId.HasValue)
+        {
+            _editingBudgetId = null;
+            _showForm = true;
+            _error = null;
+            ResetCreateForm();
+            return;
+        }
+
+        _showForm = !_showForm;
+        if (!_showForm)
+        {
+            _error = null;
+            ResetCreateForm();
+        }
+    }
+
+    private void StartEditBudget(FinanceTracker.Contracts.BudgetDto budget)
+    {
+        if (_editingBudgetId == budget.Id)
+        {
+            CancelEditBudget();
+            return;
+        }
+
+        _editingBudgetId = budget.Id;
+        _scrollToEditPanel = true;
+        _showForm = false;
+        _error = null;
+
+        _form = new FormModel
+        {
+            Category = budget.Category,
+            LimitAmount = budget.LimitAmount,
+            Currency = budget.Currency,
+            Month = budget.Month,
+            Year = budget.Year
+        };
+    }
+
+    private void CancelEditBudget()
+    {
+        _editingBudgetId = null;
+        _error = null;
+        ResetCreateForm();
+    }
+
+    private void ResetCreateForm()
+    {
+        _form = new FormModel
+        {
+            Currency = _preferredCurrency,
+            Month = _month > 0 ? _month : DateTime.Now.Month,
+            Year = _year
+        };
+    }
+
+    private async Task ConfirmDeleteBudget(Guid id)
+    {
+        if (_confirmDialog is null) return;
+        var confirmed = await _confirmDialog.ShowAsync(
+            "Delete budget",
+            "This budget will be permanently removed. This cannot be undone.",
+            "Delete",
+            danger: true);
+        if (!confirmed) return;
         await Api.DeleteBudgetAsync(id);
         await Load();
+        ToastService.Show("Budget deleted.", ToastType.Info);
     }
 
     private static IEnumerable<string> SplitErrorLines(string? error)

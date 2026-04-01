@@ -162,6 +162,14 @@ public class ApiClient
         return ApiResult.Fail(await TryReadErrorAsync(response));
     }
 
+    public async Task<ApiResult> UpdateTransactionAsync(Guid id, UpdateTransactionDto dto)
+    {
+        await AttachTokenAsync();
+        var response = await _http.PutAsJsonAsync($"api/transactions/{id}", dto);
+        if (response.IsSuccessStatusCode) return ApiResult.Ok();
+        return ApiResult.Fail(await TryReadErrorAsync(response));
+    }
+
     public async Task<bool> DeleteTransactionAsync(Guid id)
     {
         await AttachTokenAsync();
@@ -174,6 +182,14 @@ public class ApiClient
     {
         await AttachTokenAsync();
         var response = await _http.PostAsJsonAsync("api/budgets", dto);
+        if (response.IsSuccessStatusCode) return ApiResult.Ok();
+        return ApiResult.Fail(await TryReadErrorAsync(response));
+    }
+
+    public async Task<ApiResult> UpdateBudgetAsync(Guid id, UpdateBudgetDto dto)
+    {
+        await AttachTokenAsync();
+        var response = await _http.PutAsJsonAsync($"api/budgets/{id}", dto);
         if (response.IsSuccessStatusCode) return ApiResult.Ok();
         return ApiResult.Fail(await TryReadErrorAsync(response));
     }

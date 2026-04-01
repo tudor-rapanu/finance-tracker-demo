@@ -46,6 +46,22 @@ public class TransactionsController : ControllerBase
         return CreatedAtAction(nameof(GetAll), new { }, result.Value);
     }
 
+    /// <summary>Update an existing transaction.</summary>
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(TransactionDto), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTransactionDto dto)
+    {
+        var result = await _mediator.Send(new UpdateTransactionCommand(id, dto));
+        if (!result.IsSuccess)
+            return result.Error == "Transaction not found."
+                ? NotFound(new { error = result.Error })
+                : BadRequest(new { error = result.Error });
+
+        return Ok(result.Value);
+    }
+
     /// <summary>Delete a transaction by ID.</summary>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(204)]

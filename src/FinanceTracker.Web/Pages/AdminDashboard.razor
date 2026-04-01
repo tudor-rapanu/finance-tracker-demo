@@ -2,6 +2,8 @@
 @using FinanceTracker.Contracts
 @inject FinanceTracker.Web.Services.ApiClient Api
 @inject NavigationManager Nav
+@inject ToastService ToastService
+@inject PeriodStateService PeriodState
 
 <PageTitle>Admin Dashboard</PageTitle>
 
@@ -86,11 +88,11 @@ else
                         <td>
                             @if (user.Roles.Contains("Admin"))
                             {
-                                <button class="btn-demote" @onclick="() => DemoteAdmin(user.Id)">Remove Admin</button>
+                                <button class="btn-demote" @onclick="() => ConfirmDemoteAdmin(user.Id)">Remove Admin</button>
                             }
                             else
                             {
-                                <button class="btn-promote" @onclick="() => PromoteAdmin(user.Id)">Make Admin</button>
+                                <button class="btn-promote" @onclick="() => ConfirmPromoteAdmin(user.Id)">Make Admin</button>
                             }
                         </td>
                     </tr>
@@ -112,6 +114,8 @@ else
     }
 }
 
+<ConfirmDialog @ref="_confirmDialog" />
+
 @code {
     private bool _loading = true;
     private bool _isAdmin;
@@ -121,6 +125,7 @@ else
     private bool _messageIsSuccess;
     private int _selectedMonth = DateTime.Now.Month;
     private int _selectedYear = DateTime.Now.Year;
+    private ConfirmDialog? _confirmDialog;
 
     protected override async Task OnInitializedAsync()
     {
@@ -131,26 +136,52 @@ else
             return;
         }
 
+        await PeriodState.EnsureLoadedAsync();
+        _selectedMonth = PeriodState.Month;
+        _selectedYear = PeriodState.Year;
         await LoadDataAsync();
         _loading = false;
     }
 
     private async Task LoadDataAsync()
     {
+        await PeriodState.SetAsync(_selectedMonth, _selectedYear);
         _stats = await Api.GetAdminStatsAsync(_selectedMonth, _selectedYear);
         _users = await Api.GetAdminUsersAsync();
     }
 
-    private Task PromoteAdmin(string userId) => SetRole(userId, "Admin", true);
-    private Task DemoteAdmin(string userId) => SetRole(userId, "Admin", false);
+    private Task ConfirmPromoteAdmin(string userId) => ConfirmSetRole(userId, "Admin", true);
+    private Task ConfirmDemoteAdmin(string userId) => ConfirmSetRole(userId, "Admin", false);
+
+    private async Task ConfirmSetRole(string userId, string role, bool assign)
+    {
+        if (_confirmDialog is null) return;
+        var user = _users.FirstOrDefault(u => u.Id == userId);
+        var name = user is not null ? $"{user.FirstName} {user.LastName}" : "this user";
+        var confirmed = await _confirmDialog.ShowAsync(
+            assign ? $"Make {name} an Admin" : $"Remove Admin from {name}",
+            assign
+                ? $"{name} will gain full admin access to all users and system data."
+                : $"{name} will lose admin access.",
+            assign ? "Make Admin" : "Remove Admin",
+            danger: !assign);
+        if (!confirmed) return;
+        await SetRole(userId, role, assign);
+    }
 
     private async Task SetRole(string userId, string role, bool assign)
     {
         var result = await Api.SetUserRoleAsync(new SetUserRoleDto(userId, role, assign));
-          _messageIsSuccess = result.Success;
-        _message = result.Success
-            ? $"Role '{role}' {(assign ? "assigned to" : "removed from")} user."
-            : result.Error ?? "Failed to update role.";
+        if (result.Success)
+        {
+            _message = null;
+            ToastService.Show($"Role '{role}' {(assign ? "assigned to" : "removed from")} user.");
+        }
+        else
+        {
+            _messageIsSuccess = false;
+            _message = result.Error ?? "Failed to update role.";
+        }
         await LoadDataAsync();
     }
 

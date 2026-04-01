@@ -26,6 +26,22 @@ public class BudgetsController : ControllerBase
         return CreatedAtAction(nameof(Create), new { }, result.Value);
     }
 
+    /// <summary>Update an existing budget by ID.</summary>
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(BudgetDto), 200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateBudgetDto dto)
+    {
+        var result = await _mediator.Send(new UpdateBudgetCommand(id, dto));
+        if (!result.IsSuccess)
+            return result.Error == "Budget not found."
+                ? NotFound(new { error = result.Error })
+                : BadRequest(new { error = result.Error });
+
+        return Ok(result.Value);
+    }
+
     /// <summary>Delete a budget by ID.</summary>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(204)]

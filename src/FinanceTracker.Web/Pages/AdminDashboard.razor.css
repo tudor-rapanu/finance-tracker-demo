@@ -17,26 +17,19 @@ h1 {
 
 .period-picker {
   display: flex;
-  align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
 }
-
 .period-picker select,
 .period-picker button {
-  padding: 0.4rem 0.75rem;
-  border: 1px solid #ccc;
+  padding: 0.4rem 0.8rem;
   border-radius: 6px;
-  font-size: 0.875rem;
-  background: white;
-  cursor: pointer;
+  border: 1px solid #ccc;
 }
-
 .period-picker button {
-  background: #1a1a2e;
+  background: #3498db;
   color: white;
-  border-color: #1a1a2e;
-  font-weight: 600;
+  border: none;
+  cursor: pointer;
 }
 
 .period-picker button:hover {
