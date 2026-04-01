@@ -59,6 +59,10 @@ node_modules/
 **/wwwroot/service-worker-assets.js
 **/wwwroot/_framework/
 
+# DocFX generated output
+src/FinanceTracker.API/wwwroot/
+api/
+
 # EF Core local database artifacts
 *.db
 *.db-shm

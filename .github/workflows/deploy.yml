@@ -17,6 +17,9 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - name: Generate documentation
+        run: docfx docfx.json
+
       - name: Build and Publish
         run: dotnet publish src/FinanceTracker.API/FinanceTracker.API.csproj -c Release -o ${{ github.workspace }}/publish
 

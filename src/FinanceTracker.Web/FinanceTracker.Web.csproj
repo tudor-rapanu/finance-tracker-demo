@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <WasmEnableStreamingResponse>false</WasmEnableStreamingResponse>
     <WasmApplicationEnvironmentName>Development</WasmApplicationEnvironmentName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

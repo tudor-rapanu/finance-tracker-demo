@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dotnet/docfx/main/schemas/docfx.schema.json",
+  "metadata": [
+    {
+      "src": [
+        {
+          "files": ["FinanceTracker.sln"],
+          "src": "."
+        }
+      ],
+      "dest": "api",
+      "disableGitFeatures": false,
+      "disableDefaultFilter": false
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": ["**/*.{md,yml}"],
+        "exclude": ["_site/**", "src/FinanceTracker.API/wwwroot/docs/**"]
+      }
+    ],
+    "resource": [
+      {
+        "files": ["images/**"]
+      }
+    ],
+    "output": "src/FinanceTracker.API/wwwroot/docs",
+    "template": ["default", "modern"],
+    "globalMetadata": {
+      "_appName": "finance-tracker",
+      "_appTitle": "finance-tracker",
+      "_enableSearch": true,
+      "pdf": true
+    }
+  }
+}

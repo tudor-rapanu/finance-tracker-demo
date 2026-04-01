@@ -11,6 +11,7 @@ using FinanceTracker.Infrastructure;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -91,6 +92,20 @@ app.MapGet("/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
         .SelectMany(e => e.Endpoints)
         .Select(e => e.DisplayName)
 );
+
+app.UseHttpsRedirection();
+
+// Enables serving static files from wwwroot for documentation site
+app.UseFileServer(new FileServerOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "docs")),
+    RequestPath = "/docs",
+    EnableDefaultFiles = true
+});
+
+// Keep this to serve normal API static assets (if you have any)
+app.UseStaticFiles();
 
 app.UseCors();
 app.UseAuthentication();
