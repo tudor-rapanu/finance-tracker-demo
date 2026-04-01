@@ -15,7 +15,24 @@ else if (!_isAdmin)
 }
 else
 {
-    <h1>Admin Dashboard</h1>
+    <div class="page-header">
+        <h1>Admin Dashboard</h1>
+        <div class="period-picker">
+            <select @bind="_selectedMonth">
+                @for (int m = 1; m <= 12; m++)
+                {
+                    <option value="@m">@(new DateTime(2000, m, 1).ToString("MMMM"))</option>
+                }
+            </select>
+            <select @bind="_selectedYear">
+                @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 3; y--)
+                {
+                    <option value="@y">@y</option>
+                }
+            </select>
+            <button @onclick="LoadDataAsync">Refresh</button>
+        </div>
+    </div>
 
     @if (_stats is not null)
     {
@@ -29,12 +46,12 @@ else
                 <div class="stat-value">@_stats.TotalTransactions</div>
             </div>
             <div class="stat-card income">
-                <div class="stat-label">System Income</div>
-                <div class="stat-value">@_stats.TotalSystemIncome.ToString("C")</div>
+                <div class="stat-label">System Income (USD)</div>
+                <div class="stat-value">$@_stats.TotalSystemIncome.ToString("N2")</div>
             </div>
             <div class="stat-card expense">
-                <div class="stat-label">System Expenses</div>
-                <div class="stat-value">@_stats.TotalSystemExpenses.ToString("C")</div>
+                <div class="stat-label">System Expenses (USD)</div>
+                <div class="stat-value">$@_stats.TotalSystemExpenses.ToString("N2")</div>
             </div>
         </div>
     }
@@ -102,6 +119,8 @@ else
     private List<UserDto> _users = new();
     private string? _message;
     private bool _messageIsSuccess;
+    private int _selectedMonth = DateTime.Now.Month;
+    private int _selectedYear = DateTime.Now.Year;
 
     protected override async Task OnInitializedAsync()
     {
@@ -118,7 +137,7 @@ else
 
     private async Task LoadDataAsync()
     {
-        _stats = await Api.GetAdminStatsAsync();
+        _stats = await Api.GetAdminStatsAsync(_selectedMonth, _selectedYear);
         _users = await Api.GetAdminUsersAsync();
     }
 

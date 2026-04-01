@@ -44,18 +44,36 @@ public class AdminService : IAdminService
         return result;
     }
 
-    public async Task<AdminDashboardDto> GetAdminDashboardAsync()
+    public async Task<AdminDashboardDto> GetAdminDashboardAsync(int? month = null, int? year = null)
     {
         var totalUsers = await _userManager.Users.CountAsync();
-        var totalTransactions = await _context.Transactions.CountAsync();
 
-        var totalIncome = await _context.Transactions
-            .Where(t => t.Type == TransactionType.Income)
-            .SumAsync(t => (decimal?)t.AmountInBaseCurrency) ?? 0m;
+        var txQuery = _context.Transactions.AsQueryable();
+        if (month.HasValue && year.HasValue)
+            txQuery = txQuery.Where(t => t.Date.Month == month.Value && t.Date.Year == year.Value);
 
-        var totalExpenses = await _context.Transactions
-            .Where(t => t.Type == TransactionType.Expense)
-            .SumAsync(t => (decimal?)t.AmountInBaseCurrency) ?? 0m;
+        var totalTransactions = await txQuery.CountAsync();
+
+        // Load only the fields needed for currency conversion
+        var transactions = await txQuery
+            .Select(t => new { t.Amount, t.Currency, t.Type })
+            .ToListAsync();
+
+        // Fetch exchange rates once (cached for 1 hour) and convert all amounts to USD
+        var rates = await _exchangeRateService.GetRatesAsync("USD");
+
+        decimal totalIncome = 0m;
+        decimal totalExpenses = 0m;
+
+        foreach (var t in transactions)
+        {
+            var fromRate = rates.Rates.GetValueOrDefault(
+                (t.Currency ?? "USD").Trim().ToUpperInvariant(), 1m);
+            var amountUsd = fromRate == 0m ? t.Amount : t.Amount / fromRate;
+
+            if (t.Type == TransactionType.Income) totalIncome += amountUsd;
+            else totalExpenses += amountUsd;
+        }
 
         var recentUsers = await _userManager.Users
             .OrderByDescending(u => u.CreatedAt)

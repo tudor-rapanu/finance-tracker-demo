@@ -22,7 +22,7 @@ public class GetAllUsersQueryHandler : IRequestHandler<GetAllUsersQuery, Result<
 }
 
 // --- Get Admin Dashboard ---
-public record GetAdminDashboardQuery : IRequest<Result<AdminDashboardDto>>;
+public record GetAdminDashboardQuery(int? Month = null, int? Year = null) : IRequest<Result<AdminDashboardDto>>;
 
 public class GetAdminDashboardQueryHandler : IRequestHandler<GetAdminDashboardQuery, Result<AdminDashboardDto>>
 {
@@ -32,7 +32,7 @@ public class GetAdminDashboardQueryHandler : IRequestHandler<GetAdminDashboardQu
 
     public async Task<Result<AdminDashboardDto>> Handle(GetAdminDashboardQuery request, CancellationToken ct)
     {
-        var dashboard = await _adminService.GetAdminDashboardAsync();
+        var dashboard = await _adminService.GetAdminDashboardAsync(request.Month, request.Year);
         return Result<AdminDashboardDto>.Success(dashboard);
     }
 }

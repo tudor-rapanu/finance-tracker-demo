@@ -247,10 +247,13 @@ public class ApiClient
         return await _http.GetFromJsonAsync<List<UserDto>>("api/admin/users") ?? new();
     }
 
-    public async Task<AdminDashboardDto?> GetAdminStatsAsync()
+    public async Task<AdminDashboardDto?> GetAdminStatsAsync(int? month = null, int? year = null)
     {
         await AttachTokenAsync();
-        return await _http.GetFromJsonAsync<AdminDashboardDto>("api/admin/dashboard");
+        var url = month.HasValue && year.HasValue
+            ? $"api/admin/dashboard?month={month}&year={year}"
+            : "api/admin/dashboard";
+        return await _http.GetFromJsonAsync<AdminDashboardDto>(url);
     }
 
     public async Task<ApiResult> SetUserRoleAsync(SetUserRoleDto dto)

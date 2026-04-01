@@ -28,9 +28,9 @@ public class AdminController : ControllerBase
     /// <summary>Get system-wide stats: user count, transaction totals, recent users.</summary>
     [HttpGet("dashboard")]
     [ProducesResponseType(typeof(AdminDashboardDto), 200)]
-    public async Task<IActionResult> GetAdminDashboard()
+    public async Task<IActionResult> GetAdminDashboard([FromQuery] int? month, [FromQuery] int? year)
     {
-        var result = await _mediator.Send(new GetAdminDashboardQuery());
+        var result = await _mediator.Send(new GetAdminDashboardQuery(month, year));
         return result.IsSuccess ? Ok(result.Value) : BadRequest(new { error = result.Error });
     }
 

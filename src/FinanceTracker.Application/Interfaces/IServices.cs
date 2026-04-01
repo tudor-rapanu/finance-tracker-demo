@@ -26,7 +26,7 @@ public interface ICurrentUserService
 public interface IAdminService
 {
     Task<List<UserDto>> GetAllUsersAsync();
-    Task<AdminDashboardDto> GetAdminDashboardAsync();
+    Task<AdminDashboardDto> GetAdminDashboardAsync(int? month = null, int? year = null);
     Task SetUserRoleAsync(string userId, string role, bool assign);
     Task<int> RecalculateTransactionAmountsAsync();
 }
