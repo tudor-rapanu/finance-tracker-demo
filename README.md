@@ -213,7 +213,7 @@ Here are some future features that are coming to the project:
 
 - [ ] **Refresh token rotation** — persist refresh tokens to DB and rotate on use
 - [ ] **Pagination** — add page/pageSize params to transaction queries
-- [ ] **Charts** — add a charting library (e.g. Radzen, Chart.js via JS interop)
+- [x] **Charts** — add a charting library (with pure interactive SVG)
 - [ ] **Export to CSV/PDF** — let users download their transaction history
 - [ ] **Recurring transactions** — auto-generate monthly salary/rent entries
 - [ ] **Email notifications** — alert users when a budget hits 80%

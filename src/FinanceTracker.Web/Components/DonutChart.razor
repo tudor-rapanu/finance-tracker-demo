@@ -1,0 +1,187 @@
+@if (HasData)
+{
+    <div class="donut-chart">
+        <div class="donut-visual">
+            <svg viewBox="0 0 120 120" class="donut-svg" role="img" aria-label="@Title">
+                @foreach (var segment in CalculatedSegments)
+                {
+                    <circle @key="segment.Label"
+                        cx="60"
+                            cy="60"
+                            r="40"
+                            fill="transparent"
+                            stroke="@segment.Color"
+                            stroke-width="14"
+                            pointer-events="visibleStroke"
+                            class="@GetSegmentClass(segment.Label)"
+                            stroke-dasharray="@segment.DashArray"
+                            stroke-dashoffset="@segment.DashOffset"
+                            transform="rotate(-90 60 60)"
+                            @onclick="() => ToggleSelectionAsync(segment.Label)"
+                            @onkeydown="args => HandleSegmentKeyDownAsync(segment.Label, args)"
+                            @onkeydown:preventDefault="true"
+                            @onmouseenter="() => SetHoveredLabel(segment.Label)"
+                            @onmouseleave="ClearHoveredLabel"
+                            @onfocus="() => SetHoveredLabel(segment.Label)"
+                            @onblur="ClearHoveredLabel"
+                            tabindex="0"
+                            focusable="true"
+                            role="button"
+                            aria-label="@GetSegmentAriaLabel(segment)"
+                            aria-pressed="@(SelectedLabel == segment.Label)">
+                        <title>@($"{segment.Label}: {segment.DisplayValue} ({segment.PercentText})")</title>
+                    </circle>
+                }
+                <circle cx="60" cy="60" r="33" class="donut-hole" />
+                <text x="60" y="56" text-anchor="middle" class="donut-center-value">@CurrentCenterValue</text>
+                <text x="60" y="68" text-anchor="middle" class="donut-center-label">@CurrentCenterLabel</text>
+            </svg>
+
+            @if (HoveredSegment is not null)
+            {
+                <div class="donut-tooltip" role="status">
+                    <span class="tooltip-label">@HoveredSegment.Label</span>
+                    <span class="tooltip-value">@HoveredSegment.DisplayValue</span>
+                    <span class="tooltip-percent">@HoveredSegment.PercentText</span>
+                </div>
+            }
+        </div>
+
+        <div class="donut-legend">
+            @foreach (var segment in CalculatedSegments)
+            {
+                <button @key="segment.Label"
+                    type="button"
+                        class="legend-row @GetLegendClass(segment.Label)"
+                        @onclick="() => ToggleSelectionAsync(segment.Label)"
+                        @onmouseenter="() => SetHoveredLabel(segment.Label)"
+                        @onmouseleave="ClearHoveredLabel"
+                        title="@($"{segment.Label}: {segment.DisplayValue} ({segment.PercentText})")">
+                    <div class="legend-main">
+                        <span class="legend-dot" style="background:@segment.Color"></span>
+                        <span class="legend-label">@segment.Label</span>
+                    </div>
+                    <div class="legend-values">
+                        <span class="legend-amount">@segment.DisplayValue</span>
+                        <span class="legend-percent">@segment.PercentText</span>
+                    </div>
+                </button>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(SelectedLabel))
+            {
+                <button type="button" class="clear-selection" @onclick="ClearSelectionAsync">
+                    Clear selection
+                </button>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <p class="donut-empty">@EmptyMessage</p>
+}
+
+@code {
+    [Parameter] public string Title { get; set; } = "Chart";
+    [Parameter] public string CenterValue { get; set; } = "0";
+    [Parameter] public string CenterLabel { get; set; } = string.Empty;
+    [Parameter] public string EmptyMessage { get; set; } = "No data available.";
+    [Parameter] public IReadOnlyList<DonutChartSegment> Segments { get; set; } = Array.Empty<DonutChartSegment>();
+    [Parameter] public string? SelectedLabel { get; set; }
+    [Parameter] public EventCallback<string?> OnSelectionChanged { get; set; }
+
+    private const double Radius = 40d;
+    private static readonly double Circumference = 2d * Math.PI * Radius;
+
+    private bool HasData => Segments.Count > 0 && Segments.Sum(s => s.Value) > 0;
+    private string? _hoveredLabel;
+
+    private CalculatedSegment? SelectedSegment =>
+        string.IsNullOrWhiteSpace(SelectedLabel)
+            ? null
+            : CalculatedSegments.FirstOrDefault(s => s.Label == SelectedLabel);
+
+    private CalculatedSegment? HoveredSegment => CalculatedSegments.FirstOrDefault(s => s.Label == _hoveredLabel);
+
+    private string CurrentCenterValue => SelectedSegment?.DisplayValue ?? HoveredSegment?.DisplayValue ?? CenterValue;
+
+    private string CurrentCenterLabel => SelectedSegment?.Label ?? HoveredSegment?.Label ?? CenterLabel;
+
+    private IReadOnlyList<CalculatedSegment> CalculatedSegments
+    {
+        get
+        {
+            var total = Segments.Sum(s => s.Value);
+            if (total <= 0) return Array.Empty<CalculatedSegment>();
+
+            var offset = 0d;
+            var result = new List<CalculatedSegment>(Segments.Count);
+
+            foreach (var segment in Segments)
+            {
+                var ratio = (double)(segment.Value / total);
+                var dash = Math.Max(ratio * Circumference, 0d);
+                var gap = Math.Max(Circumference - dash, 0d);
+
+                result.Add(new CalculatedSegment(
+                    segment.Label,
+                    segment.DisplayValue,
+                    segment.Color,
+                    dash >= Circumference - 0.01 ? $"{Circumference} 0" : $"{dash} {gap}",
+                    -offset,
+                    $"{ratio * 100:0.#}%"));
+
+                offset += dash;
+            }
+
+            return result;
+        }
+    }
+
+    private string GetSegmentClass(string label)
+    {
+        if (string.IsNullOrWhiteSpace(SelectedLabel))
+            return "donut-segment";
+
+        return SelectedLabel == label ? "donut-segment selected" : "donut-segment dimmed";
+    }
+
+    private string GetLegendClass(string label)
+    {
+        if (string.IsNullOrWhiteSpace(SelectedLabel))
+            return string.Empty;
+
+        return SelectedLabel == label ? "selected" : "dimmed";
+    }
+
+    private void SetHoveredLabel(string label) => _hoveredLabel = label;
+
+    private void ClearHoveredLabel() => _hoveredLabel = null;
+
+    private async Task ToggleSelectionAsync(string label)
+    {
+        var next = SelectedLabel == label ? null : label;
+        await OnSelectionChanged.InvokeAsync(next);
+    }
+
+    private async Task HandleSegmentKeyDownAsync(string label, KeyboardEventArgs args)
+    {
+        if (args.Key is "Enter" or " " or "Spacebar")
+            await ToggleSelectionAsync(label);
+    }
+
+    private Task ClearSelectionAsync() => OnSelectionChanged.InvokeAsync(null);
+
+    private static string GetSegmentAriaLabel(CalculatedSegment segment) =>
+        $"{segment.Label}, {segment.DisplayValue}, {segment.PercentText}";
+
+    private sealed record CalculatedSegment(
+        string Label,
+        string DisplayValue,
+        string Color,
+        string DashArray,
+        double DashOffset,
+        string PercentText
+    );
+}

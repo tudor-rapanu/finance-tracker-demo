@@ -35,6 +35,12 @@
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
 .card {
   background: white;
   border-radius: 12px;
@@ -80,12 +86,33 @@
   font-size: 1rem;
   color: #333;
 }
+
+.filter-state {
+  margin: -0.35rem 0 0.85rem;
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+
+.chart-section {
+  min-height: 360px;
+}
 .category-row {
   display: flex;
   align-items: center;
   gap: 0.8rem;
   margin-bottom: 0.7rem;
   font-size: 0.9rem;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.category-row.active,
+.budget-row.active {
+  opacity: 1;
+}
+.category-row.dimmed,
+.budget-row.dimmed {
+  opacity: 0.35;
 }
 .category-row span:first-child {
   width: 110px;
@@ -109,6 +136,9 @@
 }
 .budget-row {
   margin-bottom: 1rem;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 .budget-header {
   display: flex;
@@ -119,4 +149,17 @@
 .empty {
   color: #aaa;
   font-size: 0.9rem;
+}
+
+@media (max-width: 1120px) {
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .stat-cards,
+  .bottom-grid {
+    grid-template-columns: 1fr;
+  }
 }

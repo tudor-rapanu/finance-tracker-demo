@@ -1,0 +1,203 @@
+.donut-chart {
+  display: grid;
+  grid-template-columns: minmax(280px, 300px) minmax(0, 1fr);
+  align-items: center;
+}
+
+.donut-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-width: 0;
+}
+
+.donut-svg {
+  width: 270px;
+  height: 270px;
+}
+
+.donut-segment {
+  cursor: pointer;
+  transition:
+    opacity 0.2s ease,
+    stroke-width 0.2s ease,
+    filter 0.2s ease;
+}
+
+.donut-segment:hover,
+.donut-segment.selected {
+  stroke-width: 16;
+  filter: brightness(1.03);
+}
+
+.donut-segment.dimmed {
+  opacity: 0.3;
+}
+
+.donut-hole {
+  fill: white;
+}
+
+.donut-center-value {
+  font-size: 0.58rem;
+  font-weight: 700;
+  fill: #1f2937;
+}
+
+.donut-center-label {
+  font-size: 0.25rem;
+  fill: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.clear-selection {
+  align-self: flex-start;
+  margin-top: 0.2rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: white;
+  color: #374151;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.clear-selection:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #111827;
+}
+
+.legend-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0.35rem 0.4rem;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.legend-row:hover,
+.legend-row.selected {
+  background: #f3f6fb;
+}
+
+.legend-row.dimmed {
+  opacity: 0.45;
+}
+
+.legend-main {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.legend-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.legend-label {
+  font-size: 0.88rem;
+  color: #374151;
+  min-width: 0;
+}
+
+.legend-values {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.legend-amount {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #111827;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.legend-percent {
+  font-size: 0.76rem;
+  color: #6b7280;
+}
+
+.donut-tooltip {
+  position: absolute;
+  bottom: -0.35rem;
+  left: 50%;
+  transform: translate(-50%, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  background: #111827;
+  color: white;
+  border-radius: 10px;
+  padding: 0.45rem 0.7rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  min-width: 120px;
+}
+
+.tooltip-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.tooltip-value,
+.tooltip-percent {
+  font-size: 0.72rem;
+}
+
+.donut-empty {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 800px) {
+  .donut-chart {
+    grid-template-columns: 1fr;
+  }
+
+  .donut-svg {
+    width: 240px;
+    height: 240px;
+  }
+}
+
+@media (max-width: 560px) {
+  .donut-svg {
+    width: 210px;
+    height: 210px;
+  }
+
+  .legend-row {
+    align-items: flex-start;
+  }
+}

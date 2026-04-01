@@ -47,14 +47,43 @@
             </div>
         </div>
 
+        <div class="chart-grid">
+            <div class="section chart-section">
+                <h2>Spending Breakdown</h2>
+                <DonutChart Title="Spending Breakdown"
+                            Segments="@GetSpendingChartSegments()"
+                            CenterValue="@_dashboard.TotalExpenses.ToString("N0")"
+                            CenterLabel="@_dashboard.Currency"
+                            SelectedLabel="@_selectedSpendingLabel"
+                            OnSelectionChanged="HandleSpendingSelectionChanged"
+                            EmptyMessage="No expenses this period." />
+            </div>
+
+            <div class="section chart-section">
+                <h2>Budget Overview</h2>
+                <DonutChart Title="Budget Overview"
+                            Segments="@GetBudgetChartSegments()"
+                            CenterValue="@GetBudgetCenterValue()"
+                            CenterLabel="@GetBudgetCenterLabel()"
+                            SelectedLabel="@_selectedBudgetLabel"
+                            OnSelectionChanged="HandleBudgetSelectionChanged"
+                            EmptyMessage="No budgets set this period." />
+            </div>
+        </div>
+
         <div class="bottom-grid">
             <div class="section">
                 <h2>Top Spending Categories</h2>
-                @if (_dashboard.TopCategories.Any())
+                @if (!string.IsNullOrWhiteSpace(_selectedSpendingLabel))
                 {
-                    @foreach (var cat in _dashboard.TopCategories)
+                    <p class="filter-state">Showing only @_selectedSpendingLabel.</p>
+                }
+
+                @if (GetVisibleTopCategories().Any())
+                {
+                    @foreach (var cat in GetVisibleTopCategories())
                     {
-                        <div class="category-row">
+                        <div class="category-row active">
                             <span>@((TransactionCategory)cat.Category)</span>
                             <div class="bar-wrap">
                                 <div class="bar" style="width:@(cat.Percentage)%"></div>
@@ -71,13 +100,18 @@
 
             <div class="section">
                 <h2>Budget Status</h2>
-                @if (_dashboard.ActiveBudgets.Any())
+                @if (!string.IsNullOrWhiteSpace(_selectedBudgetLabel))
                 {
-                    @foreach (var b in _dashboard.ActiveBudgets)
+                    <p class="filter-state">Showing only @_selectedBudgetLabel budgets.</p>
+                }
+
+                @if (GetVisibleBudgets().Any())
+                {
+                    @foreach (var b in GetVisibleBudgets())
                     {
                         var pct = Math.Min(b.PercentageUsed, 100);
                         var color = pct >= 90 ? "#e74c3c" : pct >= 70 ? "#f39c12" : "#2ecc71";
-                        <div class="budget-row">
+                        <div class="budget-row active">
                             <div class="budget-header">
                                 <span>@((TransactionCategory)b.Category)</span>
                                 <span>@b.SpentAmount.ToString("N2") @b.Currency / @b.LimitAmount.ToString("N2") @b.Currency</span>
@@ -107,6 +141,8 @@
     private string _errorMessage = "Could not load dashboard.";
     private int SelectedMonth = DateTime.Now.Month;
     private int SelectedYear = DateTime.Now.Year;
+    private string? _selectedSpendingLabel;
+    private string? _selectedBudgetLabel;
 
     protected override async Task OnInitializedAsync()
     {
@@ -127,6 +163,8 @@
         _loading = true;
         await PeriodState.SetAsync(SelectedMonth, SelectedYear);
         var result = await Api.GetDashboardAsync(SelectedMonth, SelectedYear);
+        _selectedSpendingLabel = null;
+        _selectedBudgetLabel = null;
 
         if (!result.Success)
         {
@@ -148,9 +186,120 @@
         _loading = false;
     }
 
+    private Task HandleSpendingSelectionChanged(string? label)
+    {
+        _selectedSpendingLabel = label;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleBudgetSelectionChanged(string? label)
+    {
+        _selectedBudgetLabel = label;
+        return Task.CompletedTask;
+    }
+
+    private IReadOnlyList<FinanceTracker.Contracts.CategorySpendingDto> GetVisibleTopCategories()
+    {
+        if (_dashboard is null)
+            return Array.Empty<FinanceTracker.Contracts.CategorySpendingDto>();
+
+        if (string.IsNullOrWhiteSpace(_selectedSpendingLabel))
+            return _dashboard.TopCategories.ToList();
+
+        return _dashboard.TopCategories
+            .Where(cat => ((TransactionCategory)cat.Category).ToString() == _selectedSpendingLabel)
+            .ToList();
+    }
+
+    private IReadOnlyList<FinanceTracker.Contracts.BudgetDto> GetVisibleBudgets()
+    {
+        if (_dashboard is null)
+            return Array.Empty<FinanceTracker.Contracts.BudgetDto>();
+
+        if (string.IsNullOrWhiteSpace(_selectedBudgetLabel))
+            return _dashboard.ActiveBudgets.ToList();
+
+        return _selectedBudgetLabel switch
+        {
+            "Used" => _dashboard.ActiveBudgets.Where(budget => budget.SpentAmount > 0).ToList(),
+            "Remaining" => _dashboard.ActiveBudgets.Where(budget => budget.RemainingAmount > 0).ToList(),
+            "Over Budget" => _dashboard.ActiveBudgets.Where(budget => budget.RemainingAmount < 0 || budget.PercentageUsed > 100).ToList(),
+            _ => _dashboard.ActiveBudgets.ToList()
+        };
+    }
+
+    private IReadOnlyList<DonutChartSegment> GetSpendingChartSegments()
+    {
+        if (_dashboard is null || !_dashboard.TopCategories.Any())
+            return Array.Empty<DonutChartSegment>();
+
+        return _dashboard.TopCategories
+            .OrderByDescending(c => c.Amount)
+            .Select(c => new DonutChartSegment(
+                ((TransactionCategory)c.Category).ToString(),
+                c.Amount,
+                $"{c.Amount:N2} {_dashboard.Currency}",
+                GetCategoryColor(c.Category)))
+            .ToList();
+    }
+
+    private IReadOnlyList<DonutChartSegment> GetBudgetChartSegments()
+    {
+        if (_dashboard is null || !_dashboard.ActiveBudgets.Any())
+            return Array.Empty<DonutChartSegment>();
+
+        var totalLimit = _dashboard.ActiveBudgets.Sum(b => b.LimitAmount);
+        var totalSpent = _dashboard.ActiveBudgets.Sum(b => b.SpentAmount);
+        var used = Math.Min(totalSpent, totalLimit);
+        var remaining = Math.Max(totalLimit - totalSpent, 0m);
+        var over = Math.Max(totalSpent - totalLimit, 0m);
+        var segments = new List<DonutChartSegment>();
+
+        if (used > 0)
+            segments.Add(new DonutChartSegment("Used", used, $"{used:N2} {_dashboard.Currency}", "#3498db"));
+
+        if (remaining > 0)
+            segments.Add(new DonutChartSegment("Remaining", remaining, $"{remaining:N2} {_dashboard.Currency}", "#2ecc71"));
+
+        if (over > 0)
+            segments.Add(new DonutChartSegment("Over Budget", over, $"{over:N2} {_dashboard.Currency}", "#e74c3c"));
+
+        return segments;
+    }
+
+    private string GetBudgetCenterValue()
+    {
+        if (_dashboard is null || !_dashboard.ActiveBudgets.Any())
+            return "0%";
+
+        var totalLimit = _dashboard.ActiveBudgets.Sum(b => b.LimitAmount);
+        if (totalLimit <= 0)
+            return "0%";
+
+        var totalSpent = _dashboard.ActiveBudgets.Sum(b => b.SpentAmount);
+        var usage = totalSpent / totalLimit * 100m;
+        return $"{usage:0.#}%";
+    }
+
+    private string GetBudgetCenterLabel() => "used";
+
+    private static string GetCategoryColor(int category) => category switch
+    {
+        10 => "#2563eb",
+        11 => "#f59e0b",
+        12 => "#10b981",
+        13 => "#ef4444",
+        14 => "#8b5cf6",
+        15 => "#ec4899",
+        16 => "#14b8a6",
+        17 => "#f97316",
+        18 => "#6366f1",
+        _ => "#6b7280"
+    };
+
     private enum TransactionCategory
     {
-        Salary=1,Freelance,Investment,Gift,OtherIncome,
-        Housing=10,Food,Transport,Healthcare,Entertainment,Shopping,Utilities,Education,Travel,OtherExpense
+        Salary = 1, Freelance, Investment, Gift, OtherIncome,
+        Housing = 10, Food, Transport, Healthcare, Entertainment, Shopping, Utilities, Education, Travel, OtherExpense
     }
 }
