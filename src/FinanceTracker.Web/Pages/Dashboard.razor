@@ -32,7 +32,7 @@
     }
     else if (_dashboard is not null)
     {
-        <div class="stat-cards">
+        <div class="stat-cards u-tablet-grid-1 u-phone-grid-1">
             <div class="card income">
                 <span class="label">Total Income</span>
                 <span class="value">@_dashboard.TotalIncome.ToString("N2") @_dashboard.Currency</span>
@@ -47,7 +47,7 @@
             </div>
         </div>
 
-        <div class="chart-grid">
+        <div class="chart-grid u-tablet-grid-1 u-phone-grid-1">
             <div class="section chart-section">
                 <h2>Spending Breakdown</h2>
                 <DonutChart Title="Spending Breakdown"
@@ -71,7 +71,7 @@
             </div>
         </div>
 
-        <div class="bottom-grid">
+        <div class="bottom-grid u-tablet-grid-1 u-phone-grid-1">
             <div class="section">
                 <h2>Top Spending Categories</h2>
                 @if (!string.IsNullOrWhiteSpace(_selectedSpendingLabel))

@@ -1,0 +1,30 @@
+$bp-phone-max: 540px;
+$bp-tablet-min: 541px;
+$bp-tablet-max: 768px;
+$bp-desktop-min: 769px;
+
+@mixin respond($device, $bound) {
+  @if $device == phone and $bound == max {
+    @media (max-width: $bp-phone-max) {
+      @content;
+    }
+  } @else if $device == tablet and $bound == min {
+    @media (min-width: $bp-tablet-min) {
+      @content;
+    }
+  } @else if $device == tablet and $bound == max {
+    @media (max-width: $bp-tablet-max) {
+      @content;
+    }
+  } @else if $device == tablet and $bound == range {
+    @media (min-width: $bp-tablet-min) and (max-width: $bp-tablet-max) {
+      @content;
+    }
+  } @else if $device == desktop and $bound == min {
+    @media (min-width: $bp-desktop-min) {
+      @content;
+    }
+  } @else {
+    @error "Unsupported breakpoint combination. Use (phone,max), (tablet,min|max|range), or (desktop,min).";
+  }
+}

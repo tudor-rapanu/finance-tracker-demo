@@ -19,4 +19,12 @@
   <ItemGroup>
     <ProjectReference Include="..\FinanceTracker.Contracts\FinanceTracker.Contracts.csproj" />
   </ItemGroup>
+
+  <Target Name="NpmInstall" BeforeTargets="CompileSass" Condition="!Exists('$(MSBuildProjectDirectory)/node_modules/sass')">
+    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+
+  <Target Name="CompileSass" BeforeTargets="Build">
+    <Exec Command="npm run sass:build" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
 </Project>

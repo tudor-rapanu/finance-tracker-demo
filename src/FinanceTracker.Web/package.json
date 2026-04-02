@@ -1,0 +1,11 @@
+{
+  "name": "finance-tracker-web",
+  "private": true,
+  "devDependencies": {
+    "sass": "^1.93.2"
+  },
+  "scripts": {
+    "sass:build": "sass styles/app.scss:wwwroot/app.css Pages/AdminDashboard.razor.scss:Pages/AdminDashboard.razor.css Pages/Transactions.razor.scss:Pages/Transactions.razor.css Components/DonutChart.razor.scss:Components/DonutChart.razor.css Components/MainLayout.razor.scss:Components/MainLayout.razor.css --style=expanded --no-source-map",
+    "sass:watch": "sass --watch styles/app.scss:wwwroot/app.css Pages/AdminDashboard.razor.scss:Pages/AdminDashboard.razor.css Pages/Transactions.razor.scss:Pages/Transactions.razor.css Components/DonutChart.razor.scss:Components/DonutChart.razor.css Components/MainLayout.razor.scss:Components/MainLayout.razor.css --style=expanded"
+  }
+}

@@ -19,6 +19,24 @@ jobs:
         with:
           submodules: true
           lfs: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Sass
+        run: npm install
+        working-directory: src/FinanceTracker.Web
+
+      - name: Publish Blazor app
+        run: dotnet publish src/FinanceTracker.Web/FinanceTracker.Web.csproj -c Release -o publish/web
+
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -43,4 +61,5 @@ jobs:
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_LEMON_RIVER_09883E903 }}
+          app_location: "src/FinanceTracker.Web"
           action: "close"

@@ -1,3 +1,5 @@
+@use "../styles/breakpoints" as bp;
+
 .admin-page {
   max-width: var(--page-max-width);
   margin: 0 auto;
@@ -32,18 +34,15 @@ h2 {
 .stat-card.income {
   border-left: 4px solid #2ecc71;
 }
-
 .stat-card.expense {
   border-left: 4px solid #e74c3c;
 }
-
 .stat-label {
   font-size: 0.8rem;
   color: #666;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-
 .stat-value {
   font-size: 1.8rem;
   font-weight: 700;
@@ -68,7 +67,7 @@ h2 {
   border-radius: 12px;
 }
 
-@media (max-width: 768px) {
+@include bp.respond(tablet, max) {
   .table-scroll.scroll-hint-active::after {
     content: "";
     position: sticky;
@@ -77,10 +76,15 @@ h2 {
     float: right;
     width: 22px;
     height: 100%;
-    background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.92));
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0.92)
+    );
     pointer-events: none;
   }
 }
+
 .user-table th {
   background: #1a1a2e;
   color: white;
@@ -106,22 +110,18 @@ h2 {
   border-radius: 8px;
   border: 1px solid transparent;
 }
-
 .status-block ul {
   margin: 0;
   padding-left: 1rem;
 }
-
 .status-block li + li {
   margin-top: 0.25rem;
 }
-
 .status-block.success {
   background: #d9f3e4;
   border-color: #8fd0aa;
   color: #16543a;
 }
-
 .status-block.error {
   background: #fdecea;
   border-color: #f1a7a0;

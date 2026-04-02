@@ -1,13 +1,12 @@
-@charset "UTF-8";
+@use "../styles/breakpoints" as bp;
+
 .transactions-page {
   max-width: var(--page-max-width);
   margin: 0 auto;
 }
-
 .page-header {
   margin-bottom: 1.5rem;
 }
-
 .toolbar {
   display: flex;
   justify-content: space-between;
@@ -16,21 +15,17 @@
   margin-bottom: 1rem;
   flex-wrap: wrap;
 }
-
 .filter-bar {
   align-items: center;
 }
-
 .export-status {
   margin-bottom: 0.9rem;
   color: #4b5563;
   font-size: 0.85rem;
 }
-
 .export-status.export-error {
   color: #8a1f17;
 }
-
 .table-wrap {
   background: white;
   border-radius: 12px;
@@ -40,14 +35,13 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   position: relative;
 }
-
 .table-wrap table {
   width: 100%;
   min-width: 760px;
   border-collapse: collapse;
 }
 
-@media (max-width: 768px) {
+@include bp.respond(tablet, max) {
   .table-wrap.scroll-hint-active::after {
     content: "";
     position: sticky;
@@ -56,7 +50,11 @@
     float: right;
     width: 22px;
     height: 100%;
-    background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.92));
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0.92)
+    );
     pointer-events: none;
   }
 }
@@ -67,74 +65,61 @@ th {
   font-size: 0.85rem;
   color: #666;
 }
-
 td {
   padding: 0.75rem 1rem;
   border-top: 1px solid #f0f0f0;
   font-size: 0.9rem;
 }
-
 .editing-row {
   background: #f4f8ff;
 }
-
 .editing-row td {
   border-top-color: #dbe7fb;
   border-bottom: none;
 }
-
 .edit-form-row td {
   padding: 0;
   border-top: none;
 }
-
 .edit-row-panel {
   padding: 1.1rem 1rem 1rem;
   background: #f8fbff;
   border-top: 1px solid #dbe7fb;
   border-bottom: 1px solid #dbe7fb;
 }
-
 .edit-row-panel h2 {
   margin: 0 0 1rem;
   font-size: 1.05rem;
 }
-
 .badge {
   padding: 0.2rem 0.6rem;
   border-radius: 99px;
   font-size: 0.75rem;
   font-weight: 600;
 }
-
 .badge.income {
   background: #d5f5e3;
   color: #1e8449;
 }
-
 .badge.expense {
   background: #fde8e8;
   color: #c0392b;
 }
-
 .row-actions {
   display: flex;
   align-items: center;
   gap: 0.35rem;
 }
-
 .edit-actions {
   display: flex;
   gap: 0.65rem;
   align-items: center;
 }
-
 /* ── Export trigger ── */
 .dropdown-anchor {
   position: relative;
   display: inline-block;
 }
-
 .btn-export {
   padding: 0.4rem 0.8rem;
   border-radius: 6px;
@@ -145,22 +130,18 @@ td {
   font-size: 0.9rem;
   white-space: nowrap;
 }
-
 .btn-export:hover:not(:disabled) {
   background: #2980b9;
 }
-
 .btn-export:disabled {
   opacity: 0.6;
   cursor: default;
 }
-
 .dropdown-backdrop {
   position: fixed;
   inset: 0;
   z-index: 100;
 }
-
 .export-dropdown {
   position: absolute;
   top: calc(100% + 4px);
@@ -173,7 +154,6 @@ td {
   min-width: 160px;
   overflow: hidden;
 }
-
 .export-dropdown button {
   display: block;
   width: 100%;
@@ -185,11 +165,9 @@ td {
   font-size: 0.9rem;
   color: #222;
 }
-
 .export-dropdown button:hover {
   background: #f5f7fa;
 }
-
 /* ── Modal ── */
 .modal-overlay {
   position: fixed;
@@ -200,7 +178,6 @@ td {
   align-items: center;
   justify-content: center;
 }
-
 .modal-card {
   background: white;
   border-radius: 12px;
@@ -208,7 +185,6 @@ td {
   width: 360px;
   max-width: calc(100vw - 2rem);
 }
-
 .modal-header {
   display: flex;
   align-items: center;
@@ -216,13 +192,11 @@ td {
   padding: 1rem 1.25rem 0.75rem;
   border-bottom: 1px solid #f0f0f0;
 }
-
 .modal-header h3 {
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
 }
-
 .modal-close-btn {
   background: none;
   border: none;
@@ -232,22 +206,18 @@ td {
   padding: 0.1rem 0.3rem;
   border-radius: 4px;
 }
-
 .modal-close-btn:hover {
   color: #333;
   background: #f0f0f0;
 }
-
 .modal-body {
   padding: 1.1rem 1.25rem;
 }
-
 .period-options {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
-
 .radio-option {
   display: flex;
   align-items: center;
@@ -257,54 +227,47 @@ td {
   border: 1px solid #e8e8e8;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
-
 .radio-option:hover {
   background: #f8f9fa;
 }
-
 .radio-option--selected {
   border-color: #3498db;
   background: #eaf4fd;
 }
-
-.radio-option input[type=radio] {
+.radio-option input[type="radio"] {
   accent-color: #3498db;
   flex-shrink: 0;
 }
-
 .radio-label-text {
   flex: 1;
   font-weight: 500;
 }
-
 .period-hint {
   font-size: 0.78rem;
   color: #888;
   margin-left: auto;
 }
-
 .custom-period-pickers {
   margin-top: 0.85rem;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
 }
-
 .picker-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
-
 .picker-label {
   font-size: 0.82rem;
   color: #555;
   width: 2.5rem;
   flex-shrink: 0;
 }
-
 .picker-row select {
   flex: 1;
   padding: 0.35rem 0.5rem;
@@ -312,7 +275,6 @@ td {
   border-radius: 6px;
   font-size: 0.875rem;
 }
-
 .modal-error {
   margin: 0 1.25rem 0.75rem;
   padding: 0.5rem 0.75rem;
@@ -322,7 +284,6 @@ td {
   color: #8a1f17;
   font-size: 0.82rem;
 }
-
 .modal-footer {
   display: flex;
   justify-content: flex-end;

@@ -1,3 +1,5 @@
+@use "../styles/breakpoints" as bp;
+
 .donut-chart {
   display: grid;
   grid-template-columns: minmax(280px, 300px) minmax(0, 1fr);
@@ -19,7 +21,10 @@
 
 .donut-segment {
   cursor: pointer;
-  transition: opacity 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    stroke-width 0.2s ease,
+    filter 0.2s ease;
 }
 
 .donut-segment:hover,
@@ -67,7 +72,10 @@
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .clear-selection:hover {
@@ -174,20 +182,23 @@
   font-size: 0.9rem;
 }
 
-@media (max-width: 768px) {
+@include bp.respond(tablet, max) {
   .donut-chart {
     grid-template-columns: 1fr;
   }
+
   .donut-svg {
     width: 240px;
     height: 240px;
   }
 }
-@media (max-width: 540px) {
+
+@include bp.respond(phone, max) {
   .donut-svg {
     width: 210px;
     height: 210px;
   }
+
   .legend-row {
     align-items: flex-start;
   }

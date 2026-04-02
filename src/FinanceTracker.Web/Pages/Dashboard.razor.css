@@ -120,16 +120,3 @@
   color: #aaa;
   font-size: 0.9rem;
 }
-
-@media (max-width: 1120px) {
-  .chart-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 900px) {
-  .stat-cards,
-  .bottom-grid {
-    grid-template-columns: 1fr;
-  }
-}

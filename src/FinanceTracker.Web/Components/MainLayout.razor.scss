@@ -1,15 +1,15 @@
+@use "../styles/breakpoints" as bp;
+
 .layout {
   display: flex;
   min-height: 100vh;
   font-family: "Segoe UI", sans-serif;
 }
-
 .mobile-topbar,
 .mobile-backdrop,
 .sidebar-close-button {
   display: none;
 }
-
 .sidebar {
   box-sizing: border-box;
   flex: 0 0 220px;
@@ -22,17 +22,14 @@
   flex-direction: column;
   gap: 0.5rem;
 }
-
 .sidebar-header {
   display: block;
 }
-
 .logo {
   font-size: 1.4rem;
   font-weight: 700;
   margin-bottom: 1.5rem;
 }
-
 .sidebar ::deep a {
   color: #ccc;
   text-decoration: none;
@@ -40,7 +37,6 @@
   border-radius: 8px;
   display: block;
 }
-
 .sidebar ::deep a:link,
 .sidebar ::deep a:visited,
 .sidebar ::deep a:hover,
@@ -49,18 +45,15 @@
   color: #ccc;
   text-decoration: none;
 }
-
 .sidebar ::deep a:hover,
 .sidebar ::deep a.active {
   background: #16213e;
   color: white;
 }
-
 .sidebar ::deep a.active,
 .sidebar ::deep a.active:visited {
   color: white;
 }
-
 .currency-box {
   margin-top: 1rem;
   padding: 0.6rem;
@@ -70,14 +63,12 @@
   flex-direction: column;
   gap: 0.4rem;
 }
-
 .currency-box label {
   font-size: 0.75rem;
   color: #b9c0d2;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-
 .currency-box select {
   width: 100%;
   padding: 0.45rem 0.55rem;
@@ -86,7 +77,6 @@
   background: #10182d;
   color: white;
 }
-
 .btn-save-currency {
   width: 100%;
   padding: 0.45rem;
@@ -96,12 +86,10 @@
   border-radius: 6px;
   cursor: pointer;
 }
-
 .btn-save-currency:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
-
 .status-block {
   margin-top: 0.3rem;
   padding: 0.55rem 0.65rem;
@@ -109,32 +97,26 @@
   font-size: 0.72rem;
   border: 1px solid transparent;
 }
-
 .status-block ul {
   margin: 0;
   padding-left: 1rem;
 }
-
 .status-block li + li {
   margin-top: 0.2rem;
 }
-
 .status-block.success {
   background: #d9f3e4;
   border-color: #8fd0aa;
   color: #16543a;
 }
-
 .status-block.error {
   background: #fdecea;
   border-color: #f1a7a0;
   color: #8a1f17;
 }
-
 .logout-container {
   margin-top: auto;
 }
-
 .sidebar button {
   padding: 0.6rem;
   background: #e74c3c;
@@ -143,7 +125,6 @@
   border-radius: 8px;
   cursor: pointer;
 }
-
 .content {
   flex: 1;
   min-width: 0;
@@ -151,11 +132,12 @@
   background: #f4f6f9;
 }
 
-@media (max-width: 768px) {
+@include bp.respond(tablet, max) {
   .layout {
     flex-direction: column;
     min-height: auto;
   }
+
   .mobile-topbar {
     display: flex;
     align-items: center;
@@ -169,10 +151,12 @@
     color: white;
     border-bottom: 1px solid #2f3a57;
   }
+
   .mobile-topbar-brand {
     font-size: 1rem;
     font-weight: 700;
   }
+
   .mobile-menu-button,
   .sidebar-close-button {
     display: inline-flex;
@@ -185,6 +169,7 @@
     padding: 0.55rem 0.8rem;
     cursor: pointer;
   }
+
   .mobile-backdrop {
     display: block;
     position: fixed;
@@ -195,10 +180,12 @@
     transition: opacity 0.2s ease;
     z-index: 29;
   }
+
   .mobile-backdrop.show {
     opacity: 1;
     pointer-events: auto;
   }
+
   .sidebar {
     position: fixed;
     inset: 0 auto 0 0;
@@ -214,48 +201,60 @@
     transform: translateX(-100%);
     transition: transform 0.25s ease;
   }
+
   .sidebar.open {
     transform: translateX(0);
   }
+
   .sidebar-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
   }
+
   .logo {
     margin-bottom: 0.5rem;
   }
+
   .sidebar ::deep a {
     padding: 0.7rem 0.85rem;
   }
+
   .currency-box {
     margin-top: 0;
   }
+
   .logout-container {
     margin-top: 0;
   }
+
   .content {
     padding: 1rem;
   }
 }
-@media (max-width: 540px) {
+
+@include bp.respond(phone, max) {
   .sidebar {
     padding: 0.85rem;
   }
+
   .logo {
     font-size: 1.2rem;
   }
+
   .sidebar-close-button {
     padding: 0.3rem 0.5rem;
     font-size: 0.8rem;
   }
+
   .sidebar ::deep a,
   .sidebar button:not(.sidebar-close-button),
   .btn-save-currency {
     width: 100%;
     box-sizing: border-box;
   }
+
   .content {
     padding: 0.85rem;
   }

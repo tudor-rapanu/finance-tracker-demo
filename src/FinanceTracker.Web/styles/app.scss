@@ -1,3 +1,5 @@
+@use "breakpoints" as bp;
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -126,59 +128,72 @@ body {
 }
 
 /* Tablet adaptations (541-768) */
-@media (min-width: 541px) and (max-width: 768px) {
+@include bp.respond(tablet, range) {
   .page-header {
     flex-wrap: wrap;
     gap: 0.75rem;
   }
+
   .filter-bar,
   .period-picker {
     flex-wrap: wrap;
   }
+
   .form-grid {
     grid-template-columns: 1fr;
   }
+
   .u-tablet-wrap {
     flex-wrap: wrap !important;
   }
+
   .u-tablet-grid-1 {
     grid-template-columns: 1fr !important;
   }
 }
+
 /* Phone adaptations (<=540) */
-@media (max-width: 540px) {
+@include bp.respond(phone, max) {
   .page-header {
     flex-direction: column;
     align-items: stretch;
     gap: 0.65rem;
   }
+
   .filter-bar,
   .period-picker {
     align-items: stretch;
   }
+
   .filter-bar select,
   .filter-bar button,
   .period-picker select,
   .period-picker button {
     width: 100%;
   }
+
   .form-card {
     padding: 1.1rem;
   }
+
   .form-grid {
     grid-template-columns: 1fr;
   }
+
   .u-phone-stack {
     flex-direction: column !important;
     align-items: stretch !important;
   }
+
   .u-phone-full {
     width: 100% !important;
   }
+
   .u-phone-grid-1 {
     grid-template-columns: 1fr !important;
   }
 }
+
 .loading-container {
   display: flex;
   justify-content: center;
@@ -190,11 +205,11 @@ body {
 
 /* Form control baseline */
 select,
-input[type=text],
-input[type=number],
-input[type=email],
-input[type=password],
-input[type=date] {
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="date"] {
   font-family: inherit;
   font-size: 0.95rem;
 }

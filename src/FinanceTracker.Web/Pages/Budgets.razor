@@ -9,7 +9,7 @@
 <PageTitle>Budgets — FinTracker</PageTitle>
 
 <div class="budgets-page">
-    <div class="page-header">
+    <div class="page-header u-tablet-wrap u-phone-stack">
         <h1>Budgets</h1>
         <button class="btn-primary" @onclick="ToggleForm">
             @(_showForm && !_editingBudgetId.HasValue ? "✕ Cancel" : "+ New Budget")
@@ -116,7 +116,7 @@
                             <button class="btn-delete" @onclick="() => ConfirmDeleteBudget(b.Id)" title="Delete budget">✕</button>
                         </div>
                     </div>
-                    <div class="budget-amounts">
+                    <div class="budget-amounts u-phone-stack">
                         <span class="spent">@b.SpentAmount.ToString("N2") @b.Currency spent</span>
                         <span class="limit">of @b.LimitAmount.ToString("N2") @b.Currency limit</span>
                     </div>

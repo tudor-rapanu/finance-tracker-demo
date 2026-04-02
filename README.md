@@ -133,10 +133,19 @@ In a new terminal:
 
 ```bash
 cd src/FinanceTracker.Web
+npm install
+npm run sass:build
 dotnet run
 ```
 
 Frontend runs at: `https://localhost:7200`
+
+For automatic Sass compilation while you work on styles:
+
+```bash
+cd src/FinanceTracker.Web
+npm run sass:watch
+```
 
 > Make sure the API base URL in `src/FinanceTracker.Web/Program.cs` matches your API port.
 
