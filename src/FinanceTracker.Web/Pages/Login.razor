@@ -51,7 +51,7 @@
             </div>
         }
 
-        <button class="btn-submit" @onclick="Submit" disabled="@_loading">
+        <button class="btn-primary" @onclick="Submit" disabled="@_loading">
             @(_loading ? "Please wait..." : (_isRegister ? "Register" : "Login"))
         </button>
 

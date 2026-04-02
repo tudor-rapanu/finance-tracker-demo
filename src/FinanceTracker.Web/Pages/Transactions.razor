@@ -393,6 +393,8 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        await JS.InvokeVoidAsync("finTracker.updateTableScrollHints");
+
         if (!_scrollToEditPanel)
             return;
 

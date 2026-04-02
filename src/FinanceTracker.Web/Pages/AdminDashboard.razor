@@ -1,6 +1,7 @@
 @page "/admin"
 @using FinanceTracker.Contracts
 @inject FinanceTracker.Web.Services.ApiClient Api
+@inject IJSRuntime JS
 @inject NavigationManager Nav
 @inject ToastService ToastService
 @inject PeriodStateService PeriodState
@@ -17,101 +18,105 @@ else if (!_isAdmin)
 }
 else
 {
-    <div class="page-header">
-        <h1>Admin Dashboard</h1>
-        <div class="period-picker">
-            <select @bind="_selectedMonth">
-                @for (int m = 1; m <= 12; m++)
-                {
-                    <option value="@m">@(new DateTime(2000, m, 1).ToString("MMMM"))</option>
-                }
-            </select>
-            <select @bind="_selectedYear">
-                @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 3; y--)
-                {
-                    <option value="@y">@y</option>
-                }
-            </select>
-            <button @onclick="LoadDataAsync">Refresh</button>
+    <div class="admin-page">
+        <div class="page-header">
+            <h1>Admin Dashboard</h1>
+            <div class="period-picker">
+                <select @bind="_selectedMonth">
+                    @for (int m = 1; m <= 12; m++)
+                    {
+                        <option value="@m">@(new DateTime(2000, m, 1).ToString("MMMM"))</option>
+                    }
+                </select>
+                <select @bind="_selectedYear">
+                    @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 3; y--)
+                    {
+                        <option value="@y">@y</option>
+                    }
+                </select>
+                <button @onclick="LoadDataAsync">Refresh</button>
+            </div>
         </div>
+
+        @if (_stats is not null)
+        {
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Users</div>
+                    <div class="stat-value">@_stats.TotalUsers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Transactions</div>
+                    <div class="stat-value">@_stats.TotalTransactions</div>
+                </div>
+                <div class="stat-card income">
+                    <div class="stat-label">System Income (USD)</div>
+                    <div class="stat-value">$@_stats.TotalSystemIncome.ToString("N2")</div>
+                </div>
+                <div class="stat-card expense">
+                    <div class="stat-label">System Expenses (USD)</div>
+                    <div class="stat-value">$@_stats.TotalSystemExpenses.ToString("N2")</div>
+                </div>
+            </div>
+        }
+
+        <h2>All Users</h2>
+        @if (_users.Count == 0)
+        {
+            <p>No users found.</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Currency</th>
+                            <th>Joined</th>
+                            <th>Roles</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in _users)
+                        {
+                            <tr>
+                                <td>@user.FirstName @user.LastName</td>
+                                <td>@user.Email</td>
+                                <td>@user.PreferredCurrency</td>
+                                <td>@user.CreatedAt.ToShortDateString()</td>
+                                <td>@string.Join(", ", user.Roles)</td>
+                                <td>
+                                    @if (user.Roles.Contains("Admin"))
+                                    {
+                                        <button class="btn-action btn-action--danger" @onclick="() => ConfirmDemoteAdmin(user.Id)">Remove Admin</button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn-action btn-action--primary" @onclick="() => ConfirmPromoteAdmin(user.Id)">Make Admin</button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+              <div class="status-block @(_messageIsSuccess ? "success" : "error")" role="status" aria-live="polite">
+                  <ul>
+                      @foreach (var line in SplitMessageLines(_message))
+                      {
+                          <li>@line</li>
+                      }
+                  </ul>
+              </div>
+        }
     </div>
-
-    @if (_stats is not null)
-    {
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Total Users</div>
-                <div class="stat-value">@_stats.TotalUsers</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Transactions</div>
-                <div class="stat-value">@_stats.TotalTransactions</div>
-            </div>
-            <div class="stat-card income">
-                <div class="stat-label">System Income (USD)</div>
-                <div class="stat-value">$@_stats.TotalSystemIncome.ToString("N2")</div>
-            </div>
-            <div class="stat-card expense">
-                <div class="stat-label">System Expenses (USD)</div>
-                <div class="stat-value">$@_stats.TotalSystemExpenses.ToString("N2")</div>
-            </div>
-        </div>
-    }
-
-    <h2>All Users</h2>
-    @if (_users.Count == 0)
-    {
-        <p>No users found.</p>
-    }
-    else
-    {
-        <table class="user-table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Currency</th>
-                    <th>Joined</th>
-                    <th>Roles</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var user in _users)
-                {
-                    <tr>
-                        <td>@user.FirstName @user.LastName</td>
-                        <td>@user.Email</td>
-                        <td>@user.PreferredCurrency</td>
-                        <td>@user.CreatedAt.ToShortDateString()</td>
-                        <td>@string.Join(", ", user.Roles)</td>
-                        <td>
-                            @if (user.Roles.Contains("Admin"))
-                            {
-                                <button class="btn-demote" @onclick="() => ConfirmDemoteAdmin(user.Id)">Remove Admin</button>
-                            }
-                            else
-                            {
-                                <button class="btn-promote" @onclick="() => ConfirmPromoteAdmin(user.Id)">Make Admin</button>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-
-    @if (!string.IsNullOrEmpty(_message))
-    {
-          <div class="status-block @(_messageIsSuccess ? "success" : "error")" role="status" aria-live="polite">
-              <ul>
-                  @foreach (var line in SplitMessageLines(_message))
-                  {
-                      <li>@line</li>
-                  }
-              </ul>
-          </div>
-    }
 }
 
 <ConfirmDialog @ref="_confirmDialog" />
@@ -141,6 +146,14 @@ else
         _selectedYear = PeriodState.Year;
         await LoadDataAsync();
         _loading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_loading || !_isAdmin)
+            return;
+
+        await JS.InvokeVoidAsync("finTracker.updateTableScrollHints");
     }
 
     private async Task LoadDataAsync()

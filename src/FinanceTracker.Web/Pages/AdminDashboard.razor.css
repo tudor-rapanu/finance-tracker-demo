@@ -1,39 +1,16 @@
+.admin-page {
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+}
+
 h1 {
   margin-bottom: 1.5rem;
 }
 
 .page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
-}
-
-.page-header h1 {
-  margin-bottom: 0;
-}
-
-.period-picker {
-  display: flex;
-  gap: 0.5rem;
-}
-.period-picker select,
-.period-picker button {
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-.period-picker button {
-  background: #3498db;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-.period-picker button:hover {
-  background: #2d2d4e;
 }
 
 h2 {
@@ -73,13 +50,39 @@ h2 {
   margin-top: 0.25rem;
 }
 
+.table-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
 .user-table {
   width: 100%;
+  min-width: 760px;
   border-collapse: collapse;
   background: white;
   border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 900px) {
+  .table-scroll.scroll-hint-active::after {
+    content: "";
+    position: sticky;
+    right: 0;
+    top: 0;
+    float: right;
+    width: 22px;
+    height: 100%;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0.92)
+    );
+    pointer-events: none;
+  }
 }
 
 .user-table th {
@@ -99,31 +102,6 @@ h2 {
 
 .user-table tr:last-child td {
   border-bottom: none;
-}
-
-.btn-promote,
-.btn-demote {
-  padding: 0.35rem 0.75rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.btn-promote {
-  background: #3498db;
-  color: white;
-}
-.btn-promote:hover {
-  background: #2980b9;
-}
-.btn-demote {
-  background: #e74c3c;
-  color: white;
-}
-.btn-demote:hover {
-  background: #c0392b;
 }
 
 .status-block {

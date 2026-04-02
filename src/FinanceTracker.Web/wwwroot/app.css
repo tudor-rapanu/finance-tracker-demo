@@ -8,6 +8,119 @@ body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
+:root {
+  --page-max-width: 1000px;
+}
+
+/* ── Shared page structure ── */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-header h1 {
+  margin: 0;
+}
+
+/* ── Shared card/form utilities ── */
+.form-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.form-card h2 {
+  margin: 0 0 1rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.form-grid input,
+.form-grid select {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+/* ── Shared filter/period controls ── */
+.filter-bar,
+.period-picker {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-bar select,
+.filter-bar button,
+.period-picker select,
+.period-picker button {
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.filter-bar button,
+.period-picker button {
+  background: #3498db;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.period-picker button:hover {
+  background: #2980b9;
+}
+
+/* ── Shared error block ── */
+.error-block {
+  margin-bottom: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #f1a7a0;
+  background: #fdecea;
+  color: #8a1f17;
+  font-size: 0.85rem;
+}
+
+.error-block ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.error-block li + li {
+  margin-top: 0.25rem;
+}
+
+/* ── Shared progress bar ── */
+.bar-wrap {
+  background: #f0f0f0;
+  border-radius: 99px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s;
+}
+
 .loading-container {
   display: flex;
   justify-content: center;
@@ -15,4 +128,102 @@ body {
   height: 100vh;
   color: #888;
   font-family: sans-serif;
+}
+
+/* ── Form control baseline ── */
+select,
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="date"] {
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+/* ── Shared button utilities ── */
+.btn-primary {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+.btn-primary:hover:not(:disabled) {
+  background: #2980b9;
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #f2f4f7;
+  color: #333;
+  border: 1px solid #d6dbe1;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-secondary:hover:not(:disabled) {
+  background: #e8edf3;
+}
+
+.btn-edit {
+  background: #eef5ff;
+  border: 1px solid #c7dbf7;
+  color: #1f5a9f;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+}
+.btn-edit:hover {
+  background: #dcecff;
+}
+
+.btn-delete {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 1rem;
+  font-family: inherit;
+}
+.btn-delete:hover {
+  color: #e74c3c;
+}
+
+.btn-action {
+  padding: 0.35rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+.btn-action--primary {
+  background: #3498db;
+  color: white;
+}
+
+.btn-action--primary:hover {
+  background: #2980b9;
+}
+
+.btn-action--danger {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-action--danger:hover {
+  background: #c0392b;
 }

@@ -45,6 +45,43 @@
         document.body.removeChild(anchor);
         URL.revokeObjectURL(url);
       };
+
+      window.finTracker.updateTableScrollHints = function () {
+        const containers = document.querySelectorAll(
+          ".table-wrap, .table-scroll",
+        );
+
+        containers.forEach((container) => {
+          if (!container.__scrollHintUpdate) {
+            container.__scrollHintUpdate = function () {
+              const maxScrollLeft =
+                container.scrollWidth - container.clientWidth;
+              const hasOverflow = maxScrollLeft > 1;
+              const atScrollEnd = container.scrollLeft >= maxScrollLeft - 1;
+
+              container.classList.toggle(
+                "scroll-hint-active",
+                hasOverflow && !atScrollEnd,
+              );
+            };
+
+            container.addEventListener("scroll", container.__scrollHintUpdate, {
+              passive: true,
+            });
+
+            if (window.ResizeObserver) {
+              const observer = new ResizeObserver(container.__scrollHintUpdate);
+              observer.observe(container);
+              if (container.firstElementChild) {
+                observer.observe(container.firstElementChild);
+              }
+              container.__scrollHintObserver = observer;
+            }
+          }
+
+          container.__scrollHintUpdate();
+        });
+      };
     </script>
     <script src="_framework/blazor.webassembly.js"></script>
   </body>
