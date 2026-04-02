@@ -1,6 +1,7 @@
 using FinanceTracker.Contracts;
 using FinanceTracker.Application.Transactions.Commands;
 using FinanceTracker.Application.Transactions.Queries;
+using FinanceTracker.Application.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,8 +14,18 @@ namespace FinanceTracker.API.Controllers;
 public class TransactionsController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly ITransactionExportService _exportService;
+    private readonly ICurrentUserService _currentUser;
 
-    public TransactionsController(IMediator mediator) => _mediator = mediator;
+    public TransactionsController(
+        IMediator mediator,
+        ITransactionExportService exportService,
+        ICurrentUserService currentUser)
+    {
+        _mediator = mediator;
+        _exportService = exportService;
+        _currentUser = currentUser;
+    }
 
     /// <summary>Get all transactions, optionally filtered by month/year.</summary>
     [HttpGet]
@@ -70,5 +81,74 @@ public class TransactionsController : ControllerBase
     {
         var result = await _mediator.Send(new DeleteTransactionCommand(id));
         return result.IsSuccess ? NoContent() : NotFound(new { error = result.Error });
+    }
+
+    /// <summary>Export one month of transactions directly as CSV or PDF.</summary>
+    [HttpGet("export")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> ExportDirect(
+        [FromQuery] string format,
+        [FromQuery] int month,
+        [FromQuery] int year,
+        CancellationToken ct)
+    {
+        if (_currentUser.UserId is null)
+            return Unauthorized(new { error = "User not authenticated." });
+
+        var request = new TransactionExportRequestDto(format, month, year, null, null, null, null);
+        var result = await _exportService.ExportDirectAsync(_currentUser.UserId, request, ct);
+        if (!result.IsSuccess || result.Value is null)
+            return BadRequest(new { error = result.Error });
+
+        return File(result.Value.Content, result.Value.ContentType, result.Value.FileName);
+    }
+
+    /// <summary>Queue a background export job for multi-month transaction exports.</summary>
+    [HttpPost("export/jobs")]
+    [ProducesResponseType(typeof(ExportJobCreatedDto), 202)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> QueueExportJob([FromBody] TransactionExportRequestDto request, CancellationToken ct)
+    {
+        if (_currentUser.UserId is null)
+            return Unauthorized(new { error = "User not authenticated." });
+
+        var result = await _exportService.QueueExportAsync(_currentUser.UserId, request, ct);
+        if (!result.IsSuccess || result.Value is null)
+            return BadRequest(new { error = result.Error });
+
+        return Accepted(result.Value);
+    }
+
+    /// <summary>Get status for a queued transaction export job.</summary>
+    [HttpGet("export/jobs/{jobId:guid}")]
+    [ProducesResponseType(typeof(ExportJobStatusDto), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetExportJobStatus(Guid jobId, CancellationToken ct)
+    {
+        if (_currentUser.UserId is null)
+            return Unauthorized(new { error = "User not authenticated." });
+
+        var result = await _exportService.GetJobStatusAsync(_currentUser.UserId, jobId, ct);
+        if (!result.IsSuccess || result.Value is null)
+            return NotFound(new { error = result.Error });
+
+        return Ok(result.Value);
+    }
+
+    /// <summary>Download completed file from a queued transaction export job.</summary>
+    [HttpGet("export/jobs/{jobId:guid}/download")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> DownloadExportJob(Guid jobId, CancellationToken ct)
+    {
+        if (_currentUser.UserId is null)
+            return Unauthorized(new { error = "User not authenticated." });
+
+        var result = await _exportService.DownloadJobAsync(_currentUser.UserId, jobId, ct);
+        if (!result.IsSuccess || result.Value is null)
+            return BadRequest(new { error = result.Error });
+
+        return File(result.Value.Content, result.Value.ContentType, result.Value.FileName);
     }
 }

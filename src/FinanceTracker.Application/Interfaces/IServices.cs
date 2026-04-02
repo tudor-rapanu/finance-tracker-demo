@@ -1,4 +1,5 @@
 using FinanceTracker.Contracts;
+using FinanceTracker.Application.Common;
 
 namespace FinanceTracker.Application.Interfaces;
 
@@ -29,4 +30,15 @@ public interface IAdminService
     Task<AdminDashboardDto> GetAdminDashboardAsync(int? month = null, int? year = null);
     Task SetUserRoleAsync(string userId, string role, bool assign);
     Task<int> RecalculateTransactionAmountsAsync();
+}
+
+public record FileExportDto(byte[] Content, string ContentType, string FileName);
+
+public interface ITransactionExportService
+{
+    bool IsMoreThanOneMonth(TransactionExportRequestDto request);
+    Task<Result<FileExportDto>> ExportDirectAsync(string userId, TransactionExportRequestDto request, CancellationToken ct);
+    Task<Result<ExportJobCreatedDto>> QueueExportAsync(string userId, TransactionExportRequestDto request, CancellationToken ct);
+    Task<Result<ExportJobStatusDto>> GetJobStatusAsync(string userId, Guid jobId, CancellationToken ct);
+    Task<Result<FileExportDto>> DownloadJobAsync(string userId, Guid jobId, CancellationToken ct);
 }

@@ -78,6 +78,12 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IAdminService, AdminService>();
         services.AddHttpClient<IExchangeRateService, ExchangeRateService>();
 
+        services.AddSingleton<TransactionExportBackgroundService>();
+        services.AddSingleton<ITransactionExportService>(sp =>
+            sp.GetRequiredService<TransactionExportBackgroundService>());
+        services.AddHostedService(sp =>
+            sp.GetRequiredService<TransactionExportBackgroundService>());
+
         return services;
     }
 }

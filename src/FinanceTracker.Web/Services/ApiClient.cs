@@ -27,6 +27,8 @@ public class ApiClient
             new(false, default, string.IsNullOrWhiteSpace(error) ? "Request failed." : error, statusCode);
     }
 
+    public record DownloadedFile(string FileName, string ContentType, byte[] Bytes);
+
     private sealed class ApiErrorResponse
     {
         public string? Error { get; set; }
@@ -170,11 +172,87 @@ public class ApiClient
         return ApiResult.Fail(await TryReadErrorAsync(response));
     }
 
+    public async Task<ApiResult<DownloadedFile>> ExportTransactionsMonthAsync(string format, int month, int year)
+    {
+        await AttachTokenAsync();
+        var response = await _http.GetAsync($"api/transactions/export?format={format}&month={month}&year={year}");
+        return await ReadDownloadResponseAsync(response, $"transactions_{year}-{month:00}.{format}");
+    }
+
+    public async Task<ApiResult<ExportJobCreatedDto>> QueueTransactionExportJobAsync(TransactionExportRequestDto request)
+    {
+        await AttachTokenAsync();
+        var response = await _http.PostAsJsonAsync("api/transactions/export/jobs", request);
+
+        if (!response.IsSuccessStatusCode)
+            return ApiResult<ExportJobCreatedDto>.Fail(await TryReadErrorAsync(response), (int)response.StatusCode);
+
+        var data = await response.Content.ReadFromJsonAsync<ExportJobCreatedDto>();
+        return data is null
+            ? ApiResult<ExportJobCreatedDto>.Fail("Invalid response from server.", (int)response.StatusCode)
+            : ApiResult<ExportJobCreatedDto>.Ok(data);
+    }
+
+    public async Task<ApiResult<ExportJobStatusDto>> GetTransactionExportJobStatusAsync(Guid jobId)
+    {
+        await AttachTokenAsync();
+        var response = await _http.GetAsync($"api/transactions/export/jobs/{jobId}");
+
+        if (!response.IsSuccessStatusCode)
+            return ApiResult<ExportJobStatusDto>.Fail(await TryReadErrorAsync(response), (int)response.StatusCode);
+
+        var data = await response.Content.ReadFromJsonAsync<ExportJobStatusDto>();
+        return data is null
+            ? ApiResult<ExportJobStatusDto>.Fail("Invalid response from server.", (int)response.StatusCode)
+            : ApiResult<ExportJobStatusDto>.Ok(data);
+    }
+
+    public async Task<ApiResult<DownloadedFile>> DownloadTransactionExportJobAsync(Guid jobId, string? format = null)
+    {
+        await AttachTokenAsync();
+        var response = await _http.GetAsync($"api/transactions/export/jobs/{jobId}/download");
+        var normalizedFormat = (format ?? string.Empty).Trim().ToLowerInvariant();
+        var extension = normalizedFormat is "pdf" or "csv" ? normalizedFormat : "bin";
+        return await ReadDownloadResponseAsync(response, $"transactions_export_{jobId}.{extension}");
+    }
+
     public async Task<bool> DeleteTransactionAsync(Guid id)
     {
         await AttachTokenAsync();
         var response = await _http.DeleteAsync($"api/transactions/{id}");
         return response.IsSuccessStatusCode;
+    }
+
+    private static async Task<ApiResult<DownloadedFile>> ReadDownloadResponseAsync(HttpResponseMessage response, string fallbackFileName)
+    {
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await TryReadErrorAsync(response);
+            return ApiResult<DownloadedFile>.Fail(error, (int)response.StatusCode);
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+        var contentDisposition = response.Content.Headers.ContentDisposition;
+        var fileName = contentDisposition?.FileNameStar ?? contentDisposition?.FileName;
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            var inferredExtension = contentType switch
+            {
+                "application/pdf" => "pdf",
+                "text/csv" => "csv",
+                _ => string.Empty
+            };
+
+            if (!string.IsNullOrWhiteSpace(inferredExtension) && fallbackFileName.EndsWith(".bin", StringComparison.OrdinalIgnoreCase))
+                fileName = Path.ChangeExtension(fallbackFileName, inferredExtension);
+            else
+                fileName = fallbackFileName;
+        }
+
+        fileName = fileName.Trim('"');
+
+        return ApiResult<DownloadedFile>.Ok(new DownloadedFile(fileName, contentType, bytes));
     }
 
     // ── Budgets ──

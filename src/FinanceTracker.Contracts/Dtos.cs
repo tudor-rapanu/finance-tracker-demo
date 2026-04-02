@@ -126,3 +126,29 @@ public record AdminDashboardDto(
 );
 
 public record SetUserRoleDto(string UserId, string Role, bool Assign);
+
+// ── Exports ───────────────────────────────────────────────────────────────
+public record TransactionExportRequestDto(
+    string Format,
+    int? Month,
+    int? Year,
+    int? FromMonth,
+    int? FromYear,
+    int? ToMonth,
+    int? ToYear
+);
+
+public record ExportJobCreatedDto(
+    Guid JobId,
+    string Status,
+    string Message
+);
+
+public record ExportJobStatusDto(
+    Guid JobId,
+    string Status,
+    int Progress,
+    string? FileName,
+    string? Error,
+    bool ReadyForDownload
+);
